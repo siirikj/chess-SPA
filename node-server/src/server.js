@@ -1,12 +1,21 @@
 import express from 'express'
+import cors from 'cors'
 
 import auth from './controllers/auth.controller.js'
 import lobby from './controllers/auth.controller.js'
 
-import db from './models/db.model.js'
+import './database.js'
 
 const app = express()
 const port = 8080
+
+app.use(cors())
+app.use(express.json())
+app.use(
+	express.urlencoded({
+		extended: true,
+	})
+)
 
 // Controllers
 app.use('/api', auth.router)

@@ -1,5 +1,9 @@
 import { Router } from 'express'
 
+import bcrypt from 'bcrypt'
+
+import db from '../models/db.model.js'
+
 const router = Router()
 
 const requireAuth = (req, res, next) => {
@@ -8,12 +12,34 @@ const requireAuth = (req, res, next) => {
 	next()
 }
 
+router.post('/register', async (req, res) => {
+	try {
+		console.log(req.body)
+		const { username, password } = req.body
+
+		console.log(username, password)
+
+		const [success, info] = await db.addUser(username, password)
+
+		res.json({
+			success,
+			info,
+		})
+	} catch (error) {
+		console.log(error)
+		res.json({
+			success: false,
+			info: error,
+		})
+	}
+})
+
 router.post('/login', async (req, res) => {
-	const { name, password } = req.body
+	const { username, password } = req.body
 
-	const isCorrectPassword = await db.passwordCheck(name, password)
+	const correctPassword = await db.verifyPassword(username, password)
 
-	console.log(`isCorrectPassword=${isCorrectPassword}`)
+	console.log(`isCorrectPassword=${correctPassword}`)
 })
 
 router.post('/logout', (req, res) => {

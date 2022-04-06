@@ -21,7 +21,7 @@ export default await (async () => {
 
 	await db.run(
 		`CREATE TABLE IF NOT EXISTS Users (
-      UserID      TEXT   NOT NULL UNIQUE,
+      UserID      TEXT  NOT NULL UNIQUE,
       Username    TEXT  NOT NULL  UNIQUE,
       Password    TEXT  NOT NULL,
       GamesPlayed int   DEFAULT 0,
