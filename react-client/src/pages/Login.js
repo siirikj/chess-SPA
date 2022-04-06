@@ -1,24 +1,70 @@
 import { Button, TextField } from '@mui/material'
 import { Formik, Form } from 'formik'
+import { useCookies } from 'react-cookie'
+
+import { useRecoilState } from 'recoil'
+
+import axios from 'axios'
 
 import * as Yup from 'yup'
+import loggedInUserAtom from '../recoil/loggedInUserAtom.js'
+import { API_BASE_URL } from '..'
+import { useNavigate } from 'react-router-dom'
+import { useEffect, useState } from 'react'
 
 const LoginSchema = Yup.object().shape({
-	email: Yup.string().email('Invalid email').required('Required'),
-	password: Yup.string()
-		.min(2, 'Too Short!')
+	username: Yup.string()
+		.min(3, 'Too Short!')
 		.max(50, 'Too Long!')
 		.required('Required'),
+	password: Yup.string().required('Required'),
 })
 
 const Login = () => {
+	const navigate = useNavigate()
+	const [cookies, setCookie, removeCookie] = useCookies(['logged-in-user'])
+	const [loggedInUser, setLoggedInUser] = useRecoilState(loggedInUserAtom)
+
+	const [errorMsg, setErrorMsg] = useState(null)
+
+	useEffect(() => {
+		if (loggedInUser) navigate('/profile')
+	}, [loggedInUser])
+
+	if (loggedInUser) return null
+
 	return (
-		<div className="w-full flex justify-center">
+		<div className="w-full flex items-center flex-col">
+			<h2>Login</h2>
+
 			<Formik
-				initialValues={{ email: '', password: '' }}
+				initialValues={{ username: '', password: '' }}
 				validationSchema={LoginSchema}
-				onSubmit={(values, { setSubmitting }) => {
-					console.log(values)
+				onSubmit={async (values, { setSubmitting }) => {
+					const res = await axios.post(`${API_BASE_URL}/login`, values)
+
+					const loggedInSuccessfully = res.data.correctPassword
+
+					if (loggedInSuccessfully) {
+						setLoggedInUser({
+							username: values.username,
+						})
+
+						setCookie(
+							'logged-in-user',
+							{
+								username: values.username,
+							},
+							{
+								maxAge: 60 * 60 * 24 * 7, // Inloggningssessionen gäller i en vecka
+								path: '/',
+							}
+						)
+
+						navigate('/profile')
+					} else {
+						setErrorMsg('Wrong credentials! :(')
+					}
 				}}
 			>
 				{({ isSubmitting, errors, touched, values, handleChange }) => (
@@ -26,14 +72,17 @@ const Login = () => {
 						<TextField
 							sx={{ width: '320px' }}
 							fullWidth
-							id="email"
-							name="email"
-							label="Email"
-							type="email"
-							value={values.email}
-							onChange={handleChange}
-							error={touched.email && Boolean(errors.email)}
-							helperText={touched.email && errors.email}
+							id="username"
+							name="username"
+							label="Username"
+							type="text"
+							value={values.username}
+							onChange={(newText) => {
+								setErrorMsg(null)
+								handleChange(newText)
+							}}
+							error={touched.username && Boolean(errors.username)}
+							helperText={touched.username && errors.username}
 						/>
 
 						<TextField
@@ -44,7 +93,10 @@ const Login = () => {
 							name="password"
 							label="Password"
 							value={values.password}
-							onChange={handleChange}
+							onChange={(newText) => {
+								setErrorMsg(null)
+								handleChange(newText)
+							}}
 							error={touched.password && Boolean(errors.password)}
 							helperText={touched.password && errors.password}
 						/>
@@ -52,6 +104,8 @@ const Login = () => {
 						<Button type="submit" variant="contained" sx={{ width: '320px' }}>
 							Submit
 						</Button>
+
+						{errorMsg && <p className="text-red-500">{errorMsg}</p>}
 					</Form>
 				)}
 			</Formik>

@@ -3,6 +3,8 @@ import { render } from 'react-dom'
 import './index.css'
 import App from './App'
 
+import { RecoilRoot } from 'recoil'
+
 import { BrowserRouter, Routes, Route } from 'react-router-dom'
 import Home from './pages/Home'
 import Lobby from './pages/Lobby'
@@ -14,19 +16,23 @@ import ChessGame from './pages/ChessGame'
 
 const rootElement = document.getElementById('root')
 
+export const API_BASE_URL = 'http://localhost:8080/api'
+
 render(
-	<BrowserRouter>
-		<Routes>
-			<Route element={<Navigation />}>
-				<Route path="/" element={<App />} />
-				<Route path="home" element={<Home />} />
-				<Route path="lobby" element={<Lobby />} />
-				<Route path="login" element={<Login />} />
-				<Route path="profile" element={<Profile />} />
-				<Route path="register" element={<Register />} />
-				<Route path="chessGame" element={<ChessGame />} />
-			</Route>
-		</Routes>
-	</BrowserRouter>,
+	<RecoilRoot>
+		<BrowserRouter>
+			<Routes>
+				<Route element={<Navigation />}>
+					<Route path="/" element={<App />} />
+					<Route path="home" element={<Home />} />
+					<Route path="lobby" element={<Lobby />} />
+					<Route path="login" element={<Login />} />
+					<Route path="profile" element={<Profile />} />
+					<Route path="register" element={<Register />} />
+					<Route path="chessGame" element={<ChessGame />} />
+				</Route>
+			</Routes>
+		</BrowserRouter>
+	</RecoilRoot>,
 	rootElement
 )

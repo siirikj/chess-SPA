@@ -35,11 +35,22 @@ router.post('/register', async (req, res) => {
 })
 
 router.post('/login', async (req, res) => {
-	const { username, password } = req.body
+	try {
+		const { username, password } = req.body
 
-	const correctPassword = await db.verifyPassword(username, password)
+		const correctPassword = await db.verifyPassword(username, password)
 
-	console.log(`isCorrectPassword=${correctPassword}`)
+		res.json({
+			correctPassword,
+			username,
+		})
+	} catch (error) {
+		console.log(error)
+		res.json({
+			success: false,
+			info: error,
+		})
+	}
 })
 
 router.post('/logout', (req, res) => {

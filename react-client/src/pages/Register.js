@@ -1,28 +1,39 @@
 import { Button, TextField } from '@mui/material'
 import { Formik, Form } from 'formik'
 
+import axios from 'axios'
+
 import * as Yup from 'yup'
+import { API_BASE_URL } from '..'
+import { useState } from 'react'
 
 const RegisterSchema = Yup.object().shape({
-	name: Yup.string()
-		.min(2, 'Too Short!')
+	username: Yup.string()
+		.min(3, 'Too Short!')
 		.max(50, 'Too Long!')
 		.required('Required'),
 	password: Yup.string()
 		.min(2, 'Too Short!')
 		.max(50, 'Too Long!')
 		.required('Required'),
-	email: Yup.string().email('Invalid email').required('Required'),
 })
 
 const Register = () => {
+	const [errorMsg, setErrorMsg] = useState(null)
+
 	return (
-		<div className="w-full flex justify-center">
+		<div className="w-full flex items-center flex-col">
+			<h2>Register account</h2>
 			<Formik
-				initialValues={{ name: '', email: '', password: '' }}
+				initialValues={{ username: '', password: '' }}
 				validationSchema={RegisterSchema}
-				onSubmit={(values, { setSubmitting }) => {
-					console.log(values)
+				onSubmit={async (values, { setSubmitting }) => {
+					const res = await axios.post(`${API_BASE_URL}/register`, values)
+					const success = res.data.success
+
+					if (!success) {
+						setErrorMsg('That username already exists!')
+					}
 				}}
 			>
 				{({ isSubmitting, errors, touched, values, handleChange }) => (
@@ -30,13 +41,17 @@ const Register = () => {
 						<TextField
 							sx={{ width: '320px' }}
 							fullWidth
-							id="name"
-							name="name"
-							label="Name"
-							value={values.name}
-							onChange={handleChange}
-							error={touched.name && Boolean(errors.name)}
-							helperText={touched.name && errors.name}
+							id="username"
+							name="username"
+							label="Username"
+							type="text"
+							value={values.username}
+							onChange={(newText) => {
+								setErrorMsg(null)
+								handleChange(newText)
+							}}
+							error={touched.username && Boolean(errors.username)}
+							helperText={touched.username && errors.username}
 						/>
 
 						<TextField
@@ -47,27 +62,19 @@ const Register = () => {
 							name="password"
 							label="Password"
 							value={values.password}
-							onChange={handleChange}
+							onChange={(newText) => {
+								setErrorMsg(null)
+								handleChange(newText)
+							}}
 							error={touched.password && Boolean(errors.password)}
 							helperText={touched.password && errors.password}
-						/>
-
-						<TextField
-							sx={{ width: '320px' }}
-							fullWidth
-							id="email"
-							name="email"
-							label="Email"
-							type="email"
-							value={values.email}
-							onChange={handleChange}
-							error={touched.email && Boolean(errors.email)}
-							helperText={touched.email && errors.email}
 						/>
 
 						<Button type="submit" variant="contained" sx={{ width: '320px' }}>
 							Submit
 						</Button>
+
+						{errorMsg && <p className="text-red-500">{errorMsg}</p>}
 					</Form>
 				)}
 			</Formik>
