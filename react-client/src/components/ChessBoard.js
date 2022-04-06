@@ -23,13 +23,10 @@ const Square = ({
 	setPiecesLocation,
 	selectedSquare,
 	setSelectedSquare,
+	activePlayer,
+	setActivePlayer,
 }) => {
 	let colorCode = 'bg-rose-600'
-
-	//console.log('SelectedSquare Number:' + selectedSquare.number)
-	//console.log('SelectedSquare Letter:' + selectedSquare.letter)
-	/*console.log('boardNumber ' + boardNumber)
-	console.log('boardLetter ' + boardLetter)*/
 	if (
 		selectedSquare.number === parseInt(boardNumber) &&
 		selectedSquare.letter === boardLetter
@@ -44,22 +41,27 @@ const Square = ({
 	return (
 		<div
 			key={boardNumber + boardLetter}
-			piceOnTop="empty"
+			piceOnTop=""
 			className={`${colorCode} w-[12.5%] text-5xl`}
 			onClick={() => {
 				console.log('Klickat på mig ' + boardNumber + boardLetter)
+				let activePlayerLetter = ''
 
-				// TODO: check if current player
-				// If no square is selected AND this is current players chessPice, select the square
-				if (selectedSquare.number === null && selectedSquare.letter === null) {
+				// If no square is selected AND this is current players chessPiece, select the square
+				if (activePlayer === 'white') {
+					activePlayerLetter = 'W'
+				} else if (activePlayer === 'black') {
+					activePlayerLetter = 'B'
+				}
+				if (
+					selectedSquare.number === null &&
+					selectedSquare.letter === null &&
+					piceOnTop[0] === activePlayerLetter
+				) {
 					let newSelectedSquare = {
 						number: parseInt(boardNumber),
 						letter: boardLetter,
 					}
-					console.log(newSelectedSquare)
-					/* console.log(
-						'New selsected square: ' + JSON.stringify(newSelectedSquare, null, 2)
-					) */
 					setSelectedSquare(newSelectedSquare)
 				} else if (
 					// If selected same square as previously, stop selecting it
@@ -70,42 +72,21 @@ const Square = ({
 						number: null,
 						letter: null,
 					}
-					console.log(newSelectedSquare)
 					setSelectedSquare(newSelectedSquare)
 				} else {
-					// See if the new square is a legal move and uppdate
+					const legalMove = legalMove()
+					// check if legal move
+					// See if the new square is a legal move and uppdate map game board according to rules, change players
 					//TODO
 					console.log('Logic for moving a pice here')
 				}
 
-				/* console.log(selectedSquare.number)
-				console.log(boardNumber)
-				console.log(selectedSquare.number === parseInt(boardNumber)) */
-				console.log(selectedSquare.letter)
-				console.log(boardLetter)
-				console.log(selectedSquare.letter === boardLetter)
-
-				//let uppdatedPiecesLocation = Object.assign({}, piecesLocation)
+				// Update so that pawn1 follows the clicks.
 				let uppdatedPiecesLocation = { ...piecesLocation }
-
-				//if(selectedSquare = null ) => uppdate
-
-				/* console.log(
-					'För uppdatering ' +
-						uppdatedPiecesLocation.black.pawn1.position.number
-				) */
 
 				uppdatedPiecesLocation.black.pawn1.position.number =
 					9 - parseInt(boardNumber)
 
-				/* console.log(
-					'Efter uppdatering ' +
-						uppdatedPiecesLocation.black.pawn1.position.number
-				)
-				console.log(
-					'Efter uppdatering gammal ' +
-						piecesLocation.black.pawn1.position.number
-				) */
 				uppdatedPiecesLocation.black.pawn1.position.letter = boardLetter
 				setPiecesLocation(uppdatedPiecesLocation)
 			}}
@@ -113,7 +94,7 @@ const Square = ({
 			<div className="pt-[100%] h-0 relative">
 				<div className="absolute bottom-0 w-full h-full flex justify-center items-center font-bold ">
 					{unicodePic}
-					{/* {piceOnTop} */}
+					{/* piceOnTop */}
 					{/* boardLetter */}
 					{/* boardNumber */}
 				</div>
@@ -121,6 +102,8 @@ const Square = ({
 		</div>
 	)
 }
+
+// const legalMove = (return true)
 
 // Matchar positonen på en pjäs till schakrutan
 const matchedPawn = (
@@ -199,6 +182,7 @@ const ChessBoard = ({
 
 						// Check if a chess pices position matches the current square
 						piceOnTop = ''
+						unicodePic = ''
 						const blackPieces = Object.keys(piecesLocation.black)
 						const whitePieces = Object.keys(piecesLocation.white)
 
@@ -211,8 +195,10 @@ const ChessBoard = ({
 							boardLetters,
 							piecesUnicodes
 						)
-						piceOnTop = pawnInfo[0]
-						unicodePic = pawnInfo[1]
+						if (pawnInfo[0] !== '') {
+							piceOnTop = 'B' + pawnInfo[0]
+							unicodePic = pawnInfo[1]
+						}
 
 						if (piceOnTop === '') {
 							pawnInfo = matchedPawn(
@@ -224,8 +210,10 @@ const ChessBoard = ({
 								boardLetters,
 								piecesUnicodes
 							)
-							piceOnTop = pawnInfo[0]
-							unicodePic = pawnInfo[1]
+							if (pawnInfo[0] !== '') {
+								piceOnTop = 'W' + pawnInfo[0]
+								unicodePic = pawnInfo[1]
+							}
 						}
 						// console.log('Unicode for pawn: ' + unicodePic)
 
@@ -241,6 +229,8 @@ const ChessBoard = ({
 								setPiecesLocation={setPiecesLocation}
 								selectedSquare={selectedSquare}
 								setSelectedSquare={setSelectedSquare}
+								activePlayer={activePlayer}
+								setActivePlayer={setActivePlayer}
 							/>
 						)
 					})}

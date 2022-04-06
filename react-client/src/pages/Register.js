@@ -1,11 +1,15 @@
 import { Button, TextField } from '@mui/material'
 import { Formik, Form } from 'formik'
 
+import { useRecoilState } from 'recoil'
+import { useCookies } from 'react-cookie'
 import axios from 'axios'
 
 import * as Yup from 'yup'
 import { API_BASE_URL } from '..'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import loggedInUserAtom from '../recoil/loggedInUserAtom'
+import { useNavigate } from 'react-router-dom'
 
 const RegisterSchema = Yup.object().shape({
 	username: Yup.string()
@@ -19,7 +23,18 @@ const RegisterSchema = Yup.object().shape({
 })
 
 const Register = () => {
+	const navigate = useNavigate()
+
+	const [cookies, setCookie, removeCookie] = useCookies(['logged-in-user'])
+	const [loggedInUser, setLoggedInUser] = useRecoilState(loggedInUserAtom)
+
 	const [errorMsg, setErrorMsg] = useState(null)
+
+	useEffect(() => {
+		if (loggedInUser) navigate('/profile')
+	}, [loggedInUser])
+
+	if (loggedInUser) return null
 
 	return (
 		<div className="w-full flex items-center flex-col">
@@ -31,7 +46,24 @@ const Register = () => {
 					const res = await axios.post(`${API_BASE_URL}/register`, values)
 					const success = res.data.success
 
-					if (!success) {
+					if (success) {
+						setLoggedInUser({
+							username: values.username,
+						})
+
+						setCookie(
+							'logged-in-user',
+							{
+								username: values.username,
+							},
+							{
+								maxAge: 60 * 60 * 24 * 7, // Inloggningssessionen gäller i en vecka
+								path: '/',
+							}
+						)
+
+						navigate('/lobby')
+					} else {
 						setErrorMsg('That username already exists!')
 					}
 				}}

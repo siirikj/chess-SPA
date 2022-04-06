@@ -61,7 +61,7 @@ const Login = () => {
 							}
 						)
 
-						navigate('/profile')
+						navigate('/lobby')
 					} else {
 						setErrorMsg('Wrong credentials! :(')
 					}
