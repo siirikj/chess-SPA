@@ -67,7 +67,7 @@ const ChessGameTemp = ({ socket }) => {
 		const chessGameId = gameInfo.id
 
 		socket.emit('updatePiecesLocation', { newActiveColor, chessGameId })
-	} // byt till setActivePlayerHandler()
+	}
 
 	return (
 		<div>
@@ -95,17 +95,15 @@ const ChessGameTemp = ({ socket }) => {
 			<p className="font-bold mt-3">Player info</p>
 			<pre>{JSON.stringify(currentPlayerInfo, null, 2)}</pre>
 
-			{/* <ChessBoard
+			<ChessBoard
 				piecesLocation={gameInfo.piecesLocation}
 				setPiecesLocation={setPiecesLocationHandler}
 				piecesUnicodes={piecesUnicodes}
 				activePlayer={gameInfo.activeColor}
 				selectedSquare={selectedSquare}
 				setSelectedSquare={setSelectedSquare}
-				squareClickHandler={null}
-				winner={null}
-				setWinner={null}
-			/> */}
+				winner={gameInfo.winner?.username}
+			/>
 		</div>
 	)
 }

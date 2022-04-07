@@ -95,8 +95,6 @@ const Square = ({
 								boardNumber,
 								boardLetter
 							)
-							//change to handler setActivePlayerHandler - picesLocation updated in Move
-							// setActivePlayer(activePlayer === 'black' ? 'white' : 'black')
 							stopSelectingSquare(setSelectedSquare)
 						} else if (piceOnTop[0] !== activePlayerLetter) {
 							const deadChessPiece = piceOnTop.substring(1)
@@ -117,8 +115,6 @@ const Square = ({
 								boardNumber,
 								boardLetter
 							)
-							// change to handler setActivePlayerHandler - picesLocation updated in Move
-							//setActivePlayer(activePlayer === 'black' ? 'white' : 'black')
 							stopSelectingSquare(setSelectedSquare)
 						}
 					}
@@ -444,7 +440,6 @@ const ChessBoard = ({
 	setPiecesLocation,
 	piecesUnicodes,
 	activePlayer,
-	setActivePlayer,
 	selectedSquare,
 	setSelectedSquare,
 	winner,
@@ -519,7 +514,6 @@ const ChessBoard = ({
 								selectedSquare={selectedSquare}
 								setSelectedSquare={setSelectedSquare}
 								activePlayer={activePlayer}
-								setActivePlayer={setActivePlayer}
 							/>
 						)
 					})}
