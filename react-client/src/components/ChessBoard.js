@@ -53,6 +53,7 @@ const Square = ({
 				} else if (activePlayer === 'black') {
 					activePlayerLetter = 'B'
 				}
+
 				if (
 					selectedSquare.number === null &&
 					selectedSquare.letter === null &&
@@ -61,6 +62,7 @@ const Square = ({
 					let newSelectedSquare = {
 						number: parseInt(boardNumber),
 						letter: boardLetter,
+						chessPiece: piceOnTop,
 					}
 					setSelectedSquare(newSelectedSquare)
 				} else if (
@@ -68,27 +70,60 @@ const Square = ({
 					selectedSquare.number === parseInt(boardNumber) &&
 					selectedSquare.letter === boardLetter
 				) {
-					let newSelectedSquare = {
-						number: null,
-						letter: null,
+					stopSelectingSquare(setSelectedSquare)
+				} else if (
+					selectedSquare.number !== null &&
+					selectedSquare.letter !== null
+				) {
+					if (
+						legalMove(
+							selectedSquare.chessPiece.substring(1),
+							piecesLocation,
+							activePlayer,
+							boardNumber,
+							boardLetter
+						) &&
+						piceOnTop[0] !== activePlayerLetter
+					) {
+						console.log('Legal move')
+						if (piceOnTop === '') {
+							console.log('No one is standing here! I will move :)')
+							moveChessPiece(
+								selectedSquare,
+								piecesLocation,
+								setPiecesLocation,
+								activePlayer,
+								boardNumber,
+								boardLetter
+							)
+							setActivePlayer(activePlayer === 'black' ? 'white' : 'black')
+							stopSelectingSquare(setSelectedSquare)
+						} else if (piceOnTop[0] !== activePlayerLetter) {
+							// TODO: remove opposits players chess piece from the game
+							const deadChessPiece = piceOnTop.substring(1)
+							const opponentColor = activePlayer === 'black' ? 'white' : 'black'
+							console.log(deadChessPiece)
+							console.log(opponentColor)
+							let uppdatedPiecesLocation = { ...piecesLocation }
+							uppdatedPiecesLocation[opponentColor][
+								deadChessPiece
+							].alive = false
+							setPiecesLocation(uppdatedPiecesLocation)
+							// TODO: What if it's the king? Win-scenario
+
+							moveChessPiece(
+								selectedSquare,
+								piecesLocation,
+								setPiecesLocation,
+								activePlayer,
+								boardNumber,
+								boardLetter
+							)
+							setActivePlayer(activePlayer === 'black' ? 'white' : 'black')
+							stopSelectingSquare(setSelectedSquare)
+						}
 					}
-					setSelectedSquare(newSelectedSquare)
-				} else {
-					const legalMove = legalMove()
-					// check if legal move
-					// See if the new square is a legal move and uppdate map game board according to rules, change players
-					//TODO
-					console.log('Logic for moving a pice here')
 				}
-
-				// Update so that pawn1 follows the clicks.
-				let uppdatedPiecesLocation = { ...piecesLocation }
-
-				uppdatedPiecesLocation.black.pawn1.position.number =
-					9 - parseInt(boardNumber)
-
-				uppdatedPiecesLocation.black.pawn1.position.letter = boardLetter
-				setPiecesLocation(uppdatedPiecesLocation)
 			}}
 		>
 			<div className="pt-[100%] h-0 relative">
@@ -103,7 +138,123 @@ const Square = ({
 	)
 }
 
-// const legalMove = (return true)
+//---------------------------------------------- Helper functions
+const moveChessPiece = (
+	selectedSquare,
+	piecesLocation,
+	setPiecesLocation,
+	activePlayer,
+	boardNumber,
+	boardLetter
+) => {
+	const chessPiece = selectedSquare.chessPiece.substring(1)
+	console.log(chessPiece)
+
+	let uppdatedPiecesLocation = { ...piecesLocation }
+	uppdatedPiecesLocation[activePlayer][chessPiece].position.number =
+		9 - parseInt(boardNumber)
+	uppdatedPiecesLocation[activePlayer][chessPiece].position.letter = boardLetter
+	setPiecesLocation(uppdatedPiecesLocation)
+}
+const stopSelectingSquare = (setSelectedSquare) => {
+	let newSelectedSquare = {
+		number: null,
+		letter: null,
+		chessPiece: null,
+	}
+	setSelectedSquare(newSelectedSquare)
+}
+const legalMove = (
+	chessPiece,
+	piecesLocation,
+	activePlayer,
+	boardNumber,
+	boardLetter
+) => {
+	console.log('Checking if leagal move for: ' + chessPiece)
+	const currentNumber = piecesLocation[activePlayer][chessPiece].position.number
+	const currentLetter = piecesLocation[activePlayer][chessPiece].position.letter
+	const newNumber = 9 - boardNumber
+	const newLetter = boardLetter
+	const boardNumbers = [8, 7, 6, 5, 4, 3, 2, 1]
+	const boardLetters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+	const distanceNumbers =
+		boardNumbers.indexOf(currentNumber) - boardNumbers.indexOf(newNumber)
+
+	const distanceLetters =
+		boardLetters.indexOf(currentLetter) - boardLetters.indexOf(newLetter)
+
+	console.log('Current letter: ' + currentLetter)
+	console.log('Current number: ' + currentNumber)
+	console.log('New letter: ' + newLetter)
+	console.log('New number: ' + newNumber)
+	console.log('indexOf current number: ' + boardNumbers.indexOf(currentNumber))
+	console.log('indexOf new number: ' + boardNumbers.indexOf(newNumber))
+	console.log('Distance number: ' + distanceNumbers)
+	console.log('Distance letters: ' + distanceLetters)
+	const noNumberChessPiece = chessPiece.replace(/\d+$/, '')
+	//TODO: all of this
+	if (chessPiece === 'king') {
+		if (Math.abs(distanceNumbers) > 1 || Math.abs(distanceLetters) > 1) {
+			console.log('False kinge move!')
+			return false
+		}
+	} else if (noNumberChessPiece === 'queen') {
+		if (
+			Math.abs(distanceNumbers) > 0 &&
+			Math.abs(distanceLetters) > 0 &&
+			!(Math.abs(distanceNumbers) === Math.abs(distanceLetters))
+		) {
+			console.log('False queen move!')
+			return false
+		} else {
+			//TODO: 3 check if someone is on path betwen
+		}
+	} else if (noNumberChessPiece === 'pawn') {
+		// first mvoe 1 or 2 steps forward.
+		if (
+			(currentNumber === 2 || currentNumber == 7) &&
+			Math.abs(distanceNumbers) <= 2 &&
+			Math.abs(distanceLetters) === 0
+		) {
+			console.log('OK first pawn move!')
+			return true
+		} else if (Math.abs(distanceNumbers) > 1) {
+			console.log('False pawn move, too many steps forward!')
+			return false
+		}
+		el
+		//TODO 4
+		// ahhhhhhh
+	} else if (noNumberChessPiece === 'rook') {
+		if (Math.abs(distanceNumbers) > 0 && Math.abs(distanceLetters) > 0) {
+			console.log('False rook move!')
+			return false
+		} else {
+			//TODO 1: Check is someone is in between you!
+		}
+	} else if (noNumberChessPiece === 'bishop') {
+		if (!(Math.abs(distanceNumbers) === Math.abs(distanceLetters))) {
+			console.log('False bishop move!')
+			return false
+		} else {
+			//TODO 2: Check is someone is in between you!
+		}
+	} else if (noNumberChessPiece === 'knight') {
+		if (
+			!(
+				(Math.abs(distanceNumbers) === 1 && Math.abs(distanceLetters) === 2) ||
+				(Math.abs(distanceNumbers) === 2 && Math.abs(distanceLetters) === 1)
+			)
+		) {
+			console.log('False knight move!')
+			return false
+		}
+	}
+	console.log('Returning true move!')
+	return true
+}
+//----------------------------------------------
 
 // Matchar positonen på en pjäs till schakrutan
 const matchedPawn = (
@@ -115,28 +266,16 @@ const matchedPawn = (
 	boardLetters,
 	piecesUnicodes
 ) => {
+	// TODO: if  not alvie, don't render chess piece
 	let tempCheessPiece = ''
 	let unicodePic = ''
 	picesNames.forEach((chessPiece) => {
-		// console.log('black ' + chessPiece)
-		// console.log(
-		// 	'Chess Pice row: ' +
-		// 		piecesLocation.black[chessPiece].position.number +
-		// 		'   Board row: ' +
-		// 		rowIdx
-		// )
-		// console.log(
-		// 	'Chess Pice letter: ' +
-		// 		piecesLocation.black[chessPiece].position.letter +
-		// 		'   Board letter: ' +
-		// 		boardLetters[colIdx]
-		// )
 		if (
 			piecesLocation[pawnColor][chessPiece].position.number === rowIdx + 1 &&
 			piecesLocation[pawnColor][chessPiece].position.letter ===
-				boardLetters[colIdx]
+				boardLetters[colIdx] &&
+			piecesLocation[pawnColor][chessPiece].alive === true
 		) {
-			// console.log('MATHCED! :DD ' + chessPiece + '' + picesNames)
 			tempCheessPiece = chessPiece
 			unicodePic = piecesUnicodes[pawnColor][chessPiece.replace(/\d+$/, '')]
 		}
@@ -215,7 +354,6 @@ const ChessBoard = ({
 								unicodePic = pawnInfo[1]
 							}
 						}
-						// console.log('Unicode for pawn: ' + unicodePic)
 
 						// Create the  square, with or witouth a piece on top
 						return (
