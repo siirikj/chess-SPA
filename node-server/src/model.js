@@ -291,6 +291,10 @@ class Model {
 				socket.leave(`chessRoom#${chessGameId}`)
 			})
 
+			socket.on('updateActiveColor', (args) => {
+				const { newActiveColor, chessGameId } = args
+			})
+
 			socket.on('surrender', (args) => {
 				const { chessGameId } = args
 

@@ -5,32 +5,7 @@ class Position {
 	}
 }
 
-export const initSelectedSquare = {
-	number: null,
-	letter: null,
-	chessPiece: null,
-}
-
-export const piecesUnicodes = {
-	white: {
-		king: '\u2654',
-		queen: '\u2655',
-		pawn: '\u2659',
-		rook: '\u2656',
-		bishop: '\u2657',
-		knight: '\u2658',
-	},
-	black: {
-		king: '\u265A',
-		queen: '\u265B',
-		pawn: '\u265F',
-		rook: '\u265C',
-		bishop: '\u265D',
-		knight: '\u265E',
-	},
-}
-
-export const initPiecesLocation = {
+const initPiecesLocation = {
 	white: {
 		king: {
 			position: new Position('e', 8),
@@ -166,3 +141,5 @@ export const initPiecesLocation = {
 		},
 	},
 }
+
+export default initPiecesLocation

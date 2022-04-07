@@ -4,13 +4,16 @@ import { useEffect, useState } from 'react'
 import { useParams } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import { API_BASE_URL } from '..'
+import ChessBoard from '../components/ChessBoard'
 import loggedInUserAtom from '../recoil/loggedInUserAtom'
+import { initSelectedSquare, piecesUnicodes } from '../utils/chess/chessPieces'
 
 const ChessGameTemp = ({ socket }) => {
 	const params = useParams()
 	const loggedInUser = useRecoilValue(loggedInUserAtom)
 
 	const [gameInfo, setGameInfo] = useState(null)
+	const [selectedSquare, setSelectedSquare] = useState(initSelectedSquare)
 
 	useEffect(() => {
 		const fetchChessGameInfo = async () => {
@@ -28,10 +31,6 @@ const ChessGameTemp = ({ socket }) => {
 			setGameInfo(updatedChessGameInfo)
 		})
 
-		// io.to(`chessRoom#${chessGameId}`).emit('chessGameInfoUpdate', {
-		//   updatedChessGameInfo: finalChessGameInfo,
-		// })
-
 		socket.emit('enteredGame', { chessGameId: params.chessGameId })
 
 		return () => socket.emit('leftGame', { chessGameId: params.chessGameId })
@@ -47,9 +46,9 @@ const ChessGameTemp = ({ socket }) => {
 	let currentPlayerInfo = null
 
 	if (isPlayer) {
-		const username = loggedInUser.username
+		const username = loggedInUser?.username
 		const color =
-			gameInfo.whitePlayer.username === loggedInUser.username
+			gameInfo.whitePlayer.username === loggedInUser?.username
 				? 'white'
 				: 'black'
 		const isActivePlayer = gameInfo.activeColor === color
@@ -62,6 +61,13 @@ const ChessGameTemp = ({ socket }) => {
 			wonGame,
 		}
 	}
+
+	const setPiecesLocationHandler = () => {
+		const newActiveColor = gameInfo.activeColor === 'white' ? 'black' : 'white'
+		const chessGameId = gameInfo.id
+
+		socket.emit('updatePiecesLocation', { newActiveColor, chessGameId })
+	} // byt till setActivePlayerHandler()
 
 	return (
 		<div>
@@ -88,6 +94,18 @@ const ChessGameTemp = ({ socket }) => {
 
 			<p className="font-bold mt-3">Player info</p>
 			<pre>{JSON.stringify(currentPlayerInfo, null, 2)}</pre>
+
+			{/* <ChessBoard
+				piecesLocation={gameInfo.piecesLocation}
+				setPiecesLocation={setPiecesLocationHandler}
+				piecesUnicodes={piecesUnicodes}
+				activePlayer={gameInfo.activeColor}
+				selectedSquare={selectedSquare}
+				setSelectedSquare={setSelectedSquare}
+				squareClickHandler={null}
+				winner={null}
+				setWinner={null}
+			/> */}
 		</div>
 	)
 }

@@ -1,6 +1,7 @@
 import User from './user.model.js'
 import { v4 as uuid } from 'uuid'
 import db from './db.model.js'
+import initPiecesLocation from './initChessPieces.js'
 
 class ChessGame {
 	constructor(username) {
@@ -12,6 +13,8 @@ class ChessGame {
 		this.whitePlayer = null
 		this.blackPlayer = null
 		this.activeColor = 'white' // "white" | "black"
+
+		this.piecesLocation = initPiecesLocation
 
 		this.winner = null
 		this.looser = null

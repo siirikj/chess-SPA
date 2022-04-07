@@ -10,10 +10,7 @@ const ChessGame = () => {
 	const [piecesLocation, setPiecesLocation] = useState(initPiecesLocation)
 	const [activePlayer, setActivePlayer] = useState('white')
 	const [selectedSquare, setSelectedSquare] = useState(initSelectedSquare)
-
-	const squareClickHandler = (selectedSquare) => {
-		setSelectedSquare(selectedSquare)
-	}
+	const [winner, setWinner] = useState(null)
 
 	return (
 		<div>
@@ -26,7 +23,8 @@ const ChessGame = () => {
 				setActivePlayer={setActivePlayer}
 				selectedSquare={selectedSquare}
 				setSelectedSquare={setSelectedSquare}
-				squareClickHandler={squareClickHandler}
+				winner={winner}
+				setWinner={setWinner}
 			/>
 		</div>
 	)

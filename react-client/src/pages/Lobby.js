@@ -45,12 +45,14 @@ const Lobby = ({ socket }) => {
 	const [chessGames, setChessGames] = useState([])
 
 	useEffect(() => {
-		socket.on('chessGamesUpdate', (chessGamesUpdate) => {
-			const { updatedChessGames } = chessGamesUpdate
-			setChessGames(updatedChessGames)
-		})
+		if (socket) {
+			socket.on('chessGamesUpdate', (chessGamesUpdate) => {
+				const { updatedChessGames } = chessGamesUpdate
+				setChessGames(updatedChessGames)
+			})
 
-		socket.emit('enteredLobby')
+			socket.emit('enteredLobby')
+		}
 
 		const fetchChessGames = async () => {
 			const res = await axios.get(`${API_BASE_URL}/chessGames`)
@@ -60,7 +62,11 @@ const Lobby = ({ socket }) => {
 
 		fetchChessGames()
 
-		return () => socket.emit('leftLobby')
+		return () => {
+			if (socket) {
+				socket.emit('leftLobby')
+			}
+		}
 	}, [])
 
 	useEffect(() => {

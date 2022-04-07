@@ -1,7 +1,5 @@
 // import ChessSquare from './utils/chessSquare'
 
-import { useEffect, useState } from 'react'
-
 //    a b c d e f g h
 // 8  w b w b w b w b
 // 7  b w b w b w b w
@@ -24,7 +22,6 @@ const Square = ({
 	selectedSquare,
 	setSelectedSquare,
 	activePlayer,
-	setActivePlayer,
 }) => {
 	let colorCode = 'bg-rose-600'
 	if (
@@ -98,7 +95,8 @@ const Square = ({
 								boardNumber,
 								boardLetter
 							)
-							setActivePlayer(activePlayer === 'black' ? 'white' : 'black')
+							//change to handler setActivePlayerHandler - picesLocation updated in Move
+							// setActivePlayer(activePlayer === 'black' ? 'white' : 'black')
 							stopSelectingSquare(setSelectedSquare)
 						} else if (piceOnTop[0] !== activePlayerLetter) {
 							const deadChessPiece = piceOnTop.substring(1)
@@ -109,7 +107,6 @@ const Square = ({
 							uppdatedPiecesLocation[opponentColor][
 								deadChessPiece
 							].alive = false
-							setPiecesLocation(uppdatedPiecesLocation)
 							// TODO: What if it's the king? Win-scenario
 
 							moveChessPiece(
@@ -120,7 +117,8 @@ const Square = ({
 								boardNumber,
 								boardLetter
 							)
-							setActivePlayer(activePlayer === 'black' ? 'white' : 'black')
+							// change to handler setActivePlayerHandler - picesLocation updated in Move
+							//setActivePlayer(activePlayer === 'black' ? 'white' : 'black')
 							stopSelectingSquare(setSelectedSquare)
 						}
 					}
@@ -131,9 +129,6 @@ const Square = ({
 			<div className="pt-[100%] h-0 relative">
 				<div className="absolute bottom-0 w-full h-full flex justify-center items-center font-bold ">
 					{unicodePic}
-					{/* piceOnTop */}
-					{/* boardLetter */}
-					{/* boardNumber */}
 				</div>
 			</div>
 		</div>
@@ -156,8 +151,10 @@ const moveChessPiece = (
 	uppdatedPiecesLocation[activePlayer][chessPiece].position.number =
 		9 - parseInt(boardNumber)
 	uppdatedPiecesLocation[activePlayer][chessPiece].position.letter = boardLetter
+	//TODO: setActivePlayerHandler change to handler AND make sure this also changes color
 	setPiecesLocation(uppdatedPiecesLocation)
 }
+
 const stopSelectingSquare = (setSelectedSquare) => {
 	let newSelectedSquare = {
 		number: null,
@@ -166,6 +163,7 @@ const stopSelectingSquare = (setSelectedSquare) => {
 	}
 	setSelectedSquare(newSelectedSquare)
 }
+
 const legalMove = (
 	chessPiece,
 	piecesLocation,
@@ -310,7 +308,6 @@ const legalMove = (
 			return false
 		}
 	}
-	console.log('Returning true move!')
 	return true
 }
 
@@ -331,8 +328,9 @@ const checkForChessPieceBetweenDiagonal = (
 		distanceNumbers > 0 ? distanceNumbers : Math.abs(distanceNumbers)
 	// -1 if left, 1 if right
 	const rightOrLeft = distanceLetters > 0 ? -1 : 1
+	console.log('UPP/DOWN')
 	blackPieces.forEach((chessPiece) => {
-		for (let i = 1; i <= absOrNot; i++) {
+		for (let i = 1; i < absOrNot; i++) {
 			if (
 				piecesLocation.black[chessPiece].position.number ===
 					currentNumber + i * upOrDown &&
@@ -342,7 +340,7 @@ const checkForChessPieceBetweenDiagonal = (
 				returnValue = false
 			}
 		}
-		for (let i = 1; i <= absOrNot; i++) {
+		for (let i = 1; i < absOrNot; i++) {
 			if (
 				piecesLocation.white[chessPiece].position.number ===
 					currentNumber + i * upOrDown &&
@@ -378,9 +376,9 @@ const checkForChessPieceBetweenHorizontalVertical = (
 
 	let stopValueLoop =
 		distanceLetters === 0 ? absOrNotVertical : absOrNotHorizontal
-	console.log('HORIZONTAL #1 LEFT')
+	console.log('HORIZONTAL/VERTICAL')
 	blackPieces.forEach((chessPiece) => {
-		for (let i = 1; i <= stopValueLoop; i++) {
+		for (let i = 1; i < stopValueLoop; i++) {
 			const matchThisNumber =
 				distanceNumbers === 0 ? currentNumber : currentNumber + i * upOrDown
 			const matchThisLetter =
@@ -394,7 +392,7 @@ const checkForChessPieceBetweenHorizontalVertical = (
 				returnValue = false
 			}
 		}
-		for (let i = 1; i <= stopValueLoop; i++) {
+		for (let i = 1; i < stopValueLoop; i++) {
 			const matchThisNumber =
 				distanceNumbers === 0 ? currentNumber : currentNumber + i * upOrDown
 			const matchThisLetter =
@@ -449,17 +447,14 @@ const ChessBoard = ({
 	setActivePlayer,
 	selectedSquare,
 	setSelectedSquare,
-	squareClickHandler,
+	winner,
+	setWinner,
 }) => {
 	const boardNumbers = ['8', '7', '6', '5', '4', '3', '2', '1']
 	const boardLetters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 	let color = 'white'
 	let piceOnTop = ''
 	let unicodePic = ''
-
-	useEffect(() => {
-		// console.log(piecesLocation)
-	}, [piecesLocation])
 
 	return (
 		<div className="flex flex-col w-[80%] mx-auto bg-red-500 border-4 border-slate-700">
@@ -533,30 +528,5 @@ const ChessBoard = ({
 		</div>
 	)
 }
-
-/* const [personer, setPersoner] = useState([
-		{
-			name: 'Rasmus',
-			age: 24,
-		},
-		{
-			name: 'Siri',
-			age: 21,
-		},
-	])
-
-	const ökaÅlder = () => {
-		const yngrePersoner = [...personer]
-
-		const äldrePersoner = yngrePersoner.map((person) => ({
-			...person,
-			age: person.age + 1,
-		}))
-
-		console.log(yngrePersoner)
-		console.log(äldrePersoner)
-
-		setPersoner(äldrePersoner)
-	} */
 
 export default ChessBoard
