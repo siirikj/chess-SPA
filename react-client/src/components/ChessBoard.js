@@ -81,7 +81,8 @@ const Square = ({
 							piecesLocation,
 							activePlayer,
 							boardNumber,
-							boardLetter
+							boardLetter,
+							piceOnTop
 						) &&
 						piceOnTop[0] !== activePlayerLetter
 					) {
@@ -169,7 +170,8 @@ const legalMove = (
 	piecesLocation,
 	activePlayer,
 	boardNumber,
-	boardLetter
+	boardLetter,
+	piceOnTop
 ) => {
 	console.log('Checking if leagal move for: ' + chessPiece)
 	const currentNumber = piecesLocation[activePlayer][chessPiece].position.number
@@ -211,21 +213,28 @@ const legalMove = (
 			//TODO: 3 check if someone is on path betwen
 		}
 	} else if (noNumberChessPiece === 'pawn') {
-		// first mvoe 1 or 2 steps forward.
+		// TODO: cant walk backwards. lägg till ingen pejäs på sitt move
+		// does this work??? - yes if we implement can't go backwards specific for player color, since a there are no square more then 2 steps after moving across the plane
 		if (
-			(currentNumber === 2 || currentNumber == 7) &&
+			(currentNumber === 2 || currentNumber === 7) &&
 			Math.abs(distanceNumbers) <= 2 &&
-			Math.abs(distanceLetters) === 0
+			Math.abs(distanceLetters) === 0 &&
+			piceOnTop === ''
 		) {
 			console.log('OK first pawn move!')
 			return true
-		} else if (Math.abs(distanceNumbers) > 1) {
-			console.log('False pawn move, too many steps forward!')
+		} else if (
+			Math.abs(distanceNumbers) <= 1 &&
+			Math.abs(distanceLetters) <= 1 &&
+			piceOnTop === ''
+		) {
+			console.log('Correct pawn move, too many steps forward!')
+			return true
+		} else if (Math.abs(distanceLetters) === 1 && piceOnTop === '') {
+			console.log('False pawn move, tried to capture empty square!')
 			return false
 		}
-		el
 		//TODO 4
-		// ahhhhhhh
 	} else if (noNumberChessPiece === 'rook') {
 		if (Math.abs(distanceNumbers) > 0 && Math.abs(distanceLetters) > 0) {
 			console.log('False rook move!')

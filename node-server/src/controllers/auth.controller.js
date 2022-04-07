@@ -1,6 +1,5 @@
 import { Router } from 'express'
-
-import bcrypt from 'bcrypt'
+import model from '../model.js'
 
 import db from '../models/db.model.js'
 
@@ -51,10 +50,6 @@ router.post('/login', async (req, res) => {
 			info: error,
 		})
 	}
-})
-
-router.post('/logout', (req, res) => {
-	console.log('Användaren vill logga ut')
 })
 
 export default { router, requireAuth }

@@ -1,3 +1,4 @@
+import ChessGame from './models/chessGame.model.js'
 import UserSession from './models/userSession.model.js'
 
 class Model {
@@ -29,6 +30,11 @@ class Model {
 		this.userSessions.push(userSession)
 	}
 
+	addChessGame(username) {
+		const chessGame = new ChessGame(username)
+		this.chessGames.push(chessGame)
+	}
+
 	removeUserSession(sessionId) {
 		const tempUserSessions = this.userSessions.filter(
 			(userSession) => userSession.sessionId !== sessionId
@@ -41,34 +47,49 @@ class Model {
 			const { session } = socket.handshake
 			session.socketID = socket.id
 
-			console.log(`\nUser with sessionId ${socket.id} connected`)
+			console.log(`\n--> User with sessionId ${socket.id} connected <--`)
 			this.addUserSession(socket.id)
 			console.log(this.userSessions)
+			console.log(`--------------------------------------------------`)
 
 			socket.on('disconnect', () => {
-				console.log(`\nUser with sessionId ${socket.id} disconnected`)
+				console.log(`\n--> User with sessionId ${socket.id} disconnected <--`)
 				this.removeUserSession(socket.id)
 				console.log(this.userSessions)
+				console.log(`--------------------------------------------------`)
 			})
 
 			socket.on('loginUser', (user) => {
 				const { username } = user
 
 				console.log(
-					`\nUser "${username}" with sessionId "${socket.id}" logged in`
+					`\n--> User "${username}" with sessionId "${socket.id}" logged in <--`
 				)
 				this.connectUserWithSession(socket.id, username)
 				console.log(this.userSessions)
+				console.log(`--------------------------------------------------`)
 			})
 
 			socket.on('logoutUser', (user) => {
 				const { username } = user
 
 				console.log(
-					`\nUser "${username}" with sessionId "${socket.id}" logged out`
+					`\n--> User "${username}" with sessionId "${socket.id}" logged out <--`
 				)
 				this.disconnectUserWithSession(socket.id, username)
 				console.log(this.userSessions)
+				console.log(`--------------------------------------------------`)
+			})
+
+			socket.on('createChessGame', (user) => {
+				const { username } = user
+
+				console.log(`\n--> User "${username}" created a game <--`)
+
+				this.addChessGame(username)
+
+				console.log(this.chessGames)
+				console.log(`--------------------------------------------------`)
 			})
 
 			session.save((err) => {

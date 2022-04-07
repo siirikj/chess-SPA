@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Router } from 'express'
 
 import { createServer } from 'http'
 import { Server } from 'socket.io'
@@ -7,7 +7,7 @@ import expressSession from 'express-session'
 import socketIOSession from 'express-socket.io-session'
 
 import auth from './controllers/auth.controller.js'
-import lobby from './controllers/auth.controller.js'
+import lobby from './controllers/lobby.controller.js'
 
 import cors from 'cors'
 
@@ -43,8 +43,8 @@ io.use(
 )
 
 // Controllers
-app.use('/api', auth.router)
 app.use('/api', lobby.router)
+app.use('/api', auth.router)
 
 model.init(io)
 

@@ -35,7 +35,7 @@ const App = () => {
 						path="lobby"
 						element={
 							socket?.connected || true ? (
-								<Lobby />
+								<Lobby socket={socket} />
 							) : (
 								<div className="w-full flex justify-center mt-3">
 									<CircularProgress size={60} />
