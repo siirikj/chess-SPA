@@ -174,6 +174,7 @@ const legalMove = (
 	piceOnTop
 ) => {
 	console.log('Checking if leagal move for: ' + chessPiece)
+	// Variabled
 	const currentNumber = piecesLocation[activePlayer][chessPiece].position.number
 	const currentLetter = piecesLocation[activePlayer][chessPiece].position.letter
 	const newNumber = 9 - boardNumber
@@ -182,20 +183,10 @@ const legalMove = (
 	const boardLetters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
 	const distanceNumbers =
 		boardNumbers.indexOf(currentNumber) - boardNumbers.indexOf(newNumber)
-
 	const distanceLetters =
 		boardLetters.indexOf(currentLetter) - boardLetters.indexOf(newLetter)
-
-	console.log('Current letter: ' + currentLetter)
-	console.log('Current number: ' + currentNumber)
-	console.log('New letter: ' + newLetter)
-	console.log('New number: ' + newNumber)
-	console.log('indexOf current number: ' + boardNumbers.indexOf(currentNumber))
-	console.log('indexOf new number: ' + boardNumbers.indexOf(newNumber))
-	console.log('Distance number: ' + distanceNumbers)
-	console.log('Distance letters: ' + distanceLetters)
 	const noNumberChessPiece = chessPiece.replace(/\d+$/, '')
-	//TODO: all of this
+	// Cheking if game rules are followed
 	if (chessPiece === 'king') {
 		if (Math.abs(distanceNumbers) > 1 || Math.abs(distanceLetters) > 1) {
 			console.log('False kinge move!')
@@ -213,8 +204,17 @@ const legalMove = (
 			//TODO: 3 check if someone is on path betwen
 		}
 	} else if (noNumberChessPiece === 'pawn') {
-		// TODO: cant walk backwards. lägg till ingen pejäs på sitt move
-		// does this work??? - yes if we implement can't go backwards specific for player color, since a there are no square more then 2 steps after moving across the plane
+		if (activePlayer === 'black') {
+			if (currentNumber > newNumber) {
+				console.log('Pawn cannot walk backwards')
+				return false
+			}
+		} else {
+			if (currentNumber < newNumber) {
+				console.log('Pawn cannot walk backwards')
+				return false
+			}
+		}
 		if (
 			(currentNumber === 2 || currentNumber === 7) &&
 			Math.abs(distanceNumbers) <= 2 &&
@@ -223,24 +223,39 @@ const legalMove = (
 		) {
 			console.log('OK first pawn move!')
 			return true
+		} else if (piceOnTop !== '') {
+			if (Math.abs(distanceLetters) === 1 && Math.abs(distanceNumbers) === 1) {
+				console.log('OK pawn move, capture the enemy!')
+				return true
+			} else {
+				console.log('False pawn move! Not valid way to capture the enemy!')
+				return false
+			}
 		} else if (
-			Math.abs(distanceNumbers) <= 1 &&
-			Math.abs(distanceLetters) <= 1 &&
-			piceOnTop === ''
+			Math.abs(distanceLetters) !== 0 ||
+			Math.abs(distanceNumbers) > 1
 		) {
-			console.log('Correct pawn move, too many steps forward!')
-			return true
-		} else if (Math.abs(distanceLetters) === 1 && piceOnTop === '') {
-			console.log('False pawn move, tried to capture empty square!')
+			console.log('False pawn move! Cannot walk this far')
 			return false
 		}
-		//TODO 4
 	} else if (noNumberChessPiece === 'rook') {
 		if (Math.abs(distanceNumbers) > 0 && Math.abs(distanceLetters) > 0) {
 			console.log('False rook move!')
 			return false
 		} else {
 			//TODO 1: Check is someone is in between you!
+			const noPiecesBetween = checkForChessPieceBetweenHorizontal(
+				piecesLocation,
+				currentNumber,
+				currentLetter,
+				newLetter,
+				distanceLetters
+			)
+			// let noPiecesBetween = true
+			if (!noPiecesBetween) {
+				console.log('False rook move! There is someone blocking your path')
+				return false
+			}
 		}
 	} else if (noNumberChessPiece === 'bishop') {
 		if (!(Math.abs(distanceNumbers) === Math.abs(distanceLetters))) {
@@ -263,22 +278,65 @@ const legalMove = (
 	console.log('Returning true move!')
 	return true
 }
+
+const checkForChessPieceBetweenHorizontal = (
+	piecesLocation,
+	currentNumber,
+	currentLetter,
+	newLetter,
+	distanceLetters
+) => {
+	//const boardNumbers = [8, 7, 6, 5, 4, 3, 2, 1]
+	const blackPieces = Object.keys(piecesLocation.black)
+	const whitePieces = Object.keys(piecesLocation.white)
+	const boardLetters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+	if (distanceLetters > 0) {
+		console.log('HEJ HOPP DETTA ÄR #1')
+		piecesLocation.white.forEach((chessPiece) => {
+			for (
+				let i = boardLetters.indecOf(currentLetter);
+				i <= boardLetters.indecOf(newLetter);
+				i++
+			) {
+				if (
+					chessPiece.position.number === currentNumber &&
+					chessPiece.position.letter === boardLetters[i]
+				) {
+					return false
+				}
+			}
+		})
+		piecesLocation.black.forEach((chessPiece) => {
+			//Do the same
+		})
+	} else {
+		console.log('HEJ HOPP DETTA ÄR #2')
+		// distanceLetters < 0
+	}
+	return true
+}
+const checkForChessPieceBetweenVertical = (
+	piecesLocation,
+	currentNumber,
+	currentLetter,
+	newLetter,
+	distanceNumbers
+) => {}
 //----------------------------------------------
 
 // Matchar positonen på en pjäs till schakrutan
 const matchedPawn = (
 	pawnColor,
-	picesNames,
+	piecesNames,
 	piecesLocation,
 	rowIdx,
 	colIdx,
 	boardLetters,
 	piecesUnicodes
 ) => {
-	// TODO: if  not alvie, don't render chess piece
 	let tempCheessPiece = ''
 	let unicodePic = ''
-	picesNames.forEach((chessPiece) => {
+	piecesNames.forEach((chessPiece) => {
 		if (
 			piecesLocation[pawnColor][chessPiece].position.number === rowIdx + 1 &&
 			piecesLocation[pawnColor][chessPiece].position.letter ===

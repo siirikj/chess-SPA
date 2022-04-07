@@ -43,6 +43,13 @@ const Lobby = ({ socket }) => {
 	const [chessGames, setChessGames] = useState([])
 
 	useEffect(() => {
+		socket.on('chessGamesUpdate', (chessGamesUpdate) => {
+			const { updatedChessGames } = chessGamesUpdate
+			setChessGames(updatedChessGames)
+		})
+
+		socket.emit('enteredLobby')
+
 		const fetchChessGames = async () => {
 			const res = await axios.get(`${API_BASE_URL}/chessGames`)
 			const { initChessGames } = res.data
@@ -50,41 +57,97 @@ const Lobby = ({ socket }) => {
 		}
 
 		fetchChessGames()
+
+		return () => socket.emit('leftLobby')
 	}, [])
 
 	return (
 		<div className="w-full flex flex-col items-center">
 			<h2>Lobby</h2>
 			<div className="w-full shadow-lg bg-white px-10 py-9 flex flex-col gap-y-3 ">
-				{chessGames.map((game) => (
-					<div
-						key={game.id}
-						className="w-full border border-slate-500 px-4 py-3 flex justify-between"
-					>
-						<div className="flex flex-col flex-[1]">
-							<p className="font-semibold">Skapare</p>
-							<p>{game.creator.username}</p>
-						</div>
+				{chessGames.map((game) => {
+					const creatorName =
+						loggedInUser && game.creator?.username === loggedInUser?.username
+							? 'You'
+							: game.creator?.username
 
-						<div className="flex flex-col flex-[1]">
-							<p className="font-semibold">ID</p>
-							<p>{game.id}</p>
-						</div>
+					const opponentName =
+						loggedInUser && game.opponent?.username === loggedInUser?.username
+							? 'You'
+							: game.opponent?.username
 
-						<Button
-							variant="contained"
-							onClick={() => {
-								if (loggedInUser) {
-									console.log(`Vill gå med i math #${game.id}`)
-								} else {
-									console.log(`Vill observera math #${game.id}`)
-								}
-							}}
+					const isCreator = creatorName === 'You'
+
+					const opponentExist = opponentName ? true : false
+
+					return (
+						<div
+							key={game.id}
+							className="w-full border border-slate-500 px-4 py-3 flex justify-between"
 						>
-							{loggedInUser ? 'Gå med' : 'Observera'}
-						</Button>
-					</div>
-				))}
+							<div className="flex flex-col flex-[1]">
+								<p className="font-semibold">Creator</p>
+								<p>{creatorName}</p>
+							</div>
+
+							<div className="flex flex-col flex-[1]">
+								<p className="font-semibold">Opponent</p>
+								<p>{opponentExist ? opponentName : '-'}</p>
+							</div>
+
+							<div className="flex">
+								{isCreator ? (
+									<>
+										{opponentExist && (
+											<Button
+												variant="contained"
+												color="success"
+												sx={{ width: '85px', ml: '-101px', mr: '16px' }}
+												onClick={() => {
+													socket.emit('startChessGame', {
+														usernameOfRemover: loggedInUser.username,
+														chessGameId: game.id,
+													})
+												}}
+											>
+												Start
+											</Button>
+										)}
+
+										<Button
+											variant="contained"
+											color="error"
+											sx={{ width: '85px' }}
+											onClick={() => {
+												socket.emit('removeChessGame', {
+													usernameOfRemover: loggedInUser.username,
+													chessGameId: game.id,
+												})
+											}}
+										>
+											Delete
+										</Button>
+									</>
+								) : opponentExist ? (
+									<div className="w-[85px]" />
+								) : (
+									<Button
+										variant="contained"
+										sx={{ width: '85px' }}
+										onClick={() => {
+											socket.emit('joinChessGame', {
+												usernameOfOpponent: loggedInUser.username,
+												chessGameId: game.id,
+											})
+										}}
+									>
+										{loggedInUser ? 'Join' : 'Observe'}
+									</Button>
+								)}
+							</div>
+						</div>
+					)
+				})}
 
 				{loggedInUser && (
 					<Button
@@ -96,7 +159,7 @@ const Lobby = ({ socket }) => {
 							})
 						}}
 					>
-						Skapa ny match
+						Create new game
 					</Button>
 				)}
 			</div>

@@ -30,9 +30,45 @@ class Model {
 		this.userSessions.push(userSession)
 	}
 
+	verifyUser(sessionId, username) {
+		const userSession = this.userSessions.find((userSession) => {
+			const isCorrectSession = userSession.sessionId === sessionId
+			const isCorrectUser = userSession.user?.username === username
+
+			return isCorrectSession && isCorrectUser
+		})
+
+		if (userSession) {
+			return true
+		} else {
+			return false
+		}
+	}
+
+	getUserFromSessionId(sessionId) {
+		const userSession = this.userSessions.find(
+			(userSession) => userSession.sessionId === sessionId
+		)
+		return userSession?.user
+	}
+
 	addChessGame(username) {
 		const chessGame = new ChessGame(username)
 		this.chessGames.push(chessGame)
+	}
+
+	joinChessGame(chessGameId, username) {
+		const chessGame = this.chessGames.find(
+			(chessGame) => chessGame.id === chessGameId
+		)
+		chessGame.addOpponent(username)
+	}
+
+	removeChessGame(chessGameId) {
+		const tempChessGames = this.chessGames.filter(
+			(chessGame) => chessGame.id !== chessGameId
+		)
+		this.chessGames = tempChessGames
 	}
 
 	removeUserSession(sessionId) {
@@ -57,6 +93,19 @@ class Model {
 				this.removeUserSession(socket.id)
 				console.log(this.userSessions)
 				console.log(`--------------------------------------------------`)
+			})
+
+			socket.on('enteredLobby', () => {
+				console.log(
+					`\n--> User with sessionId ${socket.id} joined the lobby <--`
+				)
+				socket.join('lobby')
+				console.log(`--------------------------------------------------`)
+			})
+
+			socket.on('leftLobby', () => {
+				console.log(`\n--> User with sessionId ${socket.id} left the lobby <--`)
+				socket.leave('lobby')
 			})
 
 			socket.on('loginUser', (user) => {
@@ -84,9 +133,74 @@ class Model {
 			socket.on('createChessGame', (user) => {
 				const { username } = user
 
+				const userIsVerified = this.verifyUser(socket.id, username)
+
+				if (!userIsVerified) {
+					console.log(
+						`\n--> Couldn't verify user "${username}" with session-id "${socket.id}" <--`
+					)
+					return
+				}
+
 				console.log(`\n--> User "${username}" created a game <--`)
 
 				this.addChessGame(username)
+
+				io.to('lobby').emit('chessGamesUpdate', {
+					updatedChessGames: this.chessGames,
+				})
+
+				console.log(this.chessGames)
+				console.log(`--------------------------------------------------`)
+			})
+
+			socket.on('removeChessGame', (args) => {
+				const { usernameOfRemover, chessGameId } = args
+
+				const userIsVerified = this.verifyUser(socket.id, usernameOfRemover)
+
+				if (!userIsVerified) {
+					console.log(
+						`\n--> Couldn't verify user "${usernameOfRemover}" with session-id "${socket.id}" <--`
+					)
+					return
+				}
+
+				this.removeChessGame(chessGameId)
+
+				console.log(
+					`\n--> User "${usernameOfRemover}" removed game "${chessGameId}" <--`
+				)
+
+				io.to('lobby').emit('chessGamesUpdate', {
+					updatedChessGames: this.chessGames,
+				})
+
+				console.log(this.chessGames)
+				console.log(`--------------------------------------------------`)
+			})
+
+			socket.on('joinChessGame', (args) => {
+				const { usernameOfOpponent, chessGameId } = args
+
+				const userIsVerified = this.verifyUser(socket.id, usernameOfOpponent)
+
+				if (!userIsVerified) {
+					console.log(
+						`\n--> Couldn't verify user "${usernameOfOpponent}" with session-id "${socket.id}" <--`
+					)
+					return
+				}
+
+				this.joinChessGame(chessGameId, usernameOfOpponent)
+
+				console.log(
+					`\n--> User "${usernameOfOpponent}" joined game "${chessGameId}" <--`
+				)
+
+				io.to('lobby').emit('chessGamesUpdate', {
+					updatedChessGames: this.chessGames,
+				})
 
 				console.log(this.chessGames)
 				console.log(`--------------------------------------------------`)
