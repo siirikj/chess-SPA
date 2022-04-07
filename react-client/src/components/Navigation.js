@@ -2,8 +2,6 @@ import { Link, Outlet } from 'react-router-dom'
 
 import { useRecoilState } from 'recoil'
 import loggedInUserAtom from '../recoil/loggedInUserAtom.js'
-import { useCookies } from 'react-cookie'
-import { useEffect } from 'react'
 
 const StyledLink = ({ to, children }) => {
 	return (
@@ -13,16 +11,8 @@ const StyledLink = ({ to, children }) => {
 	)
 }
 
-const Navigation = () => {
+const Navigation = ({ socket }) => {
 	const [loggedInUser, setLoggedInUser] = useRecoilState(loggedInUserAtom)
-	const [cookies, setCookie, removeCookie] = useCookies(['logged-in-user'])
-
-	useEffect(() => {
-		if (cookies) {
-			const userFromCookie = cookies['logged-in-user']
-			if (userFromCookie) setLoggedInUser({ username: userFromCookie.username })
-		}
-	}, [cookies])
 
 	return (
 		<div className="min-h-screen flex flex-col">
@@ -42,11 +32,8 @@ const Navigation = () => {
 						<button
 							className="px-2 py-1 hover:bg-slate-200 rounded font-light"
 							onClick={() => {
-								removeCookie('logged-in-user', {
-									path: '/',
-									domain: 'localhost',
-								})
 								setLoggedInUser(null)
+								socket.emit('logoutUser', { username: loggedInUser.username })
 							}}
 						>
 							Logout

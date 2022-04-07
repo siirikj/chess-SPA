@@ -20,7 +20,7 @@ const LoginSchema = Yup.object().shape({
 	password: Yup.string().required('Required'),
 })
 
-const Login = () => {
+const Login = ({ socket }) => {
 	const navigate = useNavigate()
 	const [cookies, setCookie, removeCookie] = useCookies(['logged-in-user'])
 	const [loggedInUser, setLoggedInUser] = useRecoilState(loggedInUserAtom)
@@ -60,6 +60,8 @@ const Login = () => {
 								path: '/',
 							}
 						)
+
+						socket.emit('loginUser', { username: values.username })
 
 						navigate('/lobby')
 					} else {

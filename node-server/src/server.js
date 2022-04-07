@@ -1,19 +1,44 @@
 import express from 'express'
-import cors from 'cors'
+
+import { createServer } from 'http'
+import { Server } from 'socket.io'
+
+import expressSession from 'express-session'
+import socketIOSession from 'express-socket.io-session'
 
 import auth from './controllers/auth.controller.js'
 import lobby from './controllers/auth.controller.js'
 
-import './database.js'
+import cors from 'cors'
 
-const app = express()
+import './database.js'
+import model from './model.js'
+
 const port = 8080
+const app = express() // Create express app.
+const httpServer = createServer(app)
+
+const io = new Server(httpServer, {
+	cors: {
+		origin: 'http://localhost:3000',
+	},
+})
 
 app.use(cors())
 app.use(express.json())
-app.use(
-	express.urlencoded({
-		extended: true,
+app.use(express.urlencoded({ extended: true }))
+
+const sessionConf = expressSession({
+	secret: 'Super secret! Shh! Do not tell anyone...',
+	resave: true,
+	saveUninitialized: true,
+})
+
+app.use(sessionConf)
+io.use(
+	socketIOSession(sessionConf, {
+		autoSave: true,
+		saveUninitialized: true,
 	})
 )
 
@@ -21,10 +46,8 @@ app.use(
 app.use('/api', auth.router)
 app.use('/api', lobby.router)
 
-app.get('/', (req, res) => {
-	res.send('Hello World!')
-})
+model.init(io)
 
-app.listen(port, () => {
-	console.log(`Chess app listening on port ${port}`)
+httpServer.listen(port, () => {
+	console.log(`Listening on port ${port}`)
 })

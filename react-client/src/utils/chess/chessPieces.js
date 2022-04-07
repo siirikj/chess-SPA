@@ -13,6 +13,7 @@ class Position {
 export const initSelectedSquare = {
 	number: null,
 	letter: null,
+	chessPiece: null,
 }
 
 export const piecesUnicodes = {
