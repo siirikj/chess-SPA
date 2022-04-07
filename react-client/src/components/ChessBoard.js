@@ -72,6 +72,7 @@ const Square = ({
 				) {
 					stopSelectingSquare(setSelectedSquare)
 				} else if (
+					// If selected new square, check if its a legal move and then update game board accordingly
 					selectedSquare.number !== null &&
 					selectedSquare.letter !== null
 				) {
@@ -123,6 +124,7 @@ const Square = ({
 							stopSelectingSquare(setSelectedSquare)
 						}
 					}
+					// If not legal move, don't do anything
 				}
 			}}
 		>
