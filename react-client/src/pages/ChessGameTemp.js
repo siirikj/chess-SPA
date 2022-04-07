@@ -1,7 +1,7 @@
 import { Button, CircularProgress } from '@mui/material'
 import axios from 'axios'
 import { useEffect, useState } from 'react'
-import { useParams } from 'react-router-dom'
+import { useNavigate, useParams } from 'react-router-dom'
 import { useRecoilValue } from 'recoil'
 import { API_BASE_URL } from '..'
 import ChessBoard from '../components/ChessBoard'
@@ -10,10 +10,13 @@ import { initSelectedSquare, piecesUnicodes } from '../utils/chess/chessPieces'
 
 const ChessGameTemp = ({ socket }) => {
 	const params = useParams()
+	const navigate = useNavigate()
 	const loggedInUser = useRecoilValue(loggedInUserAtom)
 
 	const [gameInfo, setGameInfo] = useState(null)
 	const [selectedSquare, setSelectedSquare] = useState(initSelectedSquare)
+
+	const [currentPlayerInfo, setCurrentPlayerInfo] = useState(null)
 
 	useEffect(() => {
 		const fetchChessGameInfo = async () => {
@@ -36,48 +39,80 @@ const ChessGameTemp = ({ socket }) => {
 		return () => socket.emit('leftGame', { chessGameId: params.chessGameId })
 	}, [])
 
+	useEffect(() => {
+		if (gameInfo) {
+			const isCreator = gameInfo.creator.username === loggedInUser?.username
+			const isOpponent = gameInfo.opponent.username === loggedInUser?.username
+
+			const isPlayer = isCreator || isOpponent
+
+			let tempCurrentPlayerInfo = null
+
+			if (isPlayer) {
+				const username = loggedInUser?.username
+				const color =
+					gameInfo.whitePlayer.username === loggedInUser?.username
+						? 'white'
+						: 'black'
+				const isActivePlayer = gameInfo.activeColor === color
+				const wonGame = gameInfo.winner?.username === username
+
+				tempCurrentPlayerInfo = {
+					username,
+					color,
+					isActivePlayer,
+					isCreator,
+					isOpponent,
+					isPlayer,
+					wonGame,
+				}
+
+				setCurrentPlayerInfo(tempCurrentPlayerInfo)
+			}
+		}
+	}, [gameInfo])
+
 	if (!gameInfo) return <CircularProgress size={60} />
 
-	const isCreator = gameInfo.creator.username === loggedInUser?.username
-	const isOpponent = gameInfo.opponent.username === loggedInUser?.username
+	if (gameInfo === 'deleted') {
+		navigate('/lobby')
+	}
 
-	const isPlayer = isCreator || isOpponent
+	const setPiecesLocationHandler = (newPiecesLocation) => {
+		const chessGameId = gameInfo.id
 
-	let currentPlayerInfo = null
+		socket.emit('updatePiecesLocation', { chessGameId, newPiecesLocation })
+	}
 
-	if (isPlayer) {
-		const username = loggedInUser?.username
-		const color =
-			gameInfo.whitePlayer.username === loggedInUser?.username
-				? 'white'
-				: 'black'
-		const isActivePlayer = gameInfo.activeColor === color
-		const wonGame = gameInfo.winner?.username === username
-
-		currentPlayerInfo = {
-			username,
-			color,
-			isActivePlayer,
-			wonGame,
+	const setSelectedSquareHandler = (newSelectedSquare) => {
+		// if (currentPlayerInfo.isActivePlayer) {
+		if (currentPlayerInfo.isActivePlayer) {
+			setSelectedSquare(newSelectedSquare)
 		}
 	}
 
-	const setPiecesLocationHandler = () => {
-		const newActiveColor = gameInfo.activeColor === 'white' ? 'black' : 'white'
-		const chessGameId = gameInfo.id
-
-		socket.emit('updatePiecesLocation', { newActiveColor, chessGameId })
-	}
-
 	return (
-		<div>
-			<p>A chess game</p>
-			{isPlayer && (
-				<div className="flex gap-x-3">
-					<Button variant="contained" onClick={() => {}}>
-						Make move
-					</Button>
+		<div className="flex flex-col items-center gap-y-3">
+			{gameInfo.state === 'finnished' && (
+				<h2>
+					{gameInfo.winner.username} won!!! {gameInfo.looser.username} lost :((
+				</h2>
+			)}
 
+			{<p>Black player: {gameInfo.blackPlayer.username}</p>}
+			<ChessBoard
+				piecesLocation={gameInfo.piecesLocation}
+				setPiecesLocation={setPiecesLocationHandler}
+				piecesUnicodes={piecesUnicodes}
+				activePlayer={gameInfo.activeColor}
+				selectedSquare={selectedSquare}
+				setSelectedSquare={setSelectedSquareHandler}
+				winner={gameInfo.winner?.username}
+			/>
+			{<p>White player: {gameInfo.whitePlayer.username}</p>}
+
+			{currentPlayerInfo?.isPlayer && gameInfo.state !== 'finnished' && (
+				<div className="flex gap-x-3">
 					<Button
 						color="error"
 						variant="contained"
@@ -90,20 +125,10 @@ const ChessGameTemp = ({ socket }) => {
 				</div>
 			)}
 
-			<pre>{JSON.stringify(gameInfo, null, 2)}</pre>
-
-			<p className="font-bold mt-3">Player info</p>
+			{/* <p className="font-bold mt-3">Player info</p>
 			<pre>{JSON.stringify(currentPlayerInfo, null, 2)}</pre>
 
-			<ChessBoard
-				piecesLocation={gameInfo.piecesLocation}
-				setPiecesLocation={setPiecesLocationHandler}
-				piecesUnicodes={piecesUnicodes}
-				activePlayer={gameInfo.activeColor}
-				selectedSquare={selectedSquare}
-				setSelectedSquare={setSelectedSquare}
-				winner={gameInfo.winner?.username}
-			/>
+			<pre>{JSON.stringify({ ...gameInfo, piecesLocation: {} }, null, 2)}</pre> */}
 		</div>
 	)
 }

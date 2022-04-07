@@ -12,6 +12,11 @@ const ChessGame = () => {
 	const [selectedSquare, setSelectedSquare] = useState(initSelectedSquare)
 	const [winner, setWinner] = useState(null)
 
+	// TODO: Ta bort denna och ersätt med Temp-komponenten
+	// TODO: Änvänd ES-linting
+	// TODO: passiv sessioninvlaidering timeout
+	//
+
 	return (
 		<div>
 			<h1>ChessGame</h1>

@@ -36,10 +36,10 @@ const Square = ({
 	}
 
 	return (
-		<div
+		<button
 			key={boardNumber + boardLetter}
 			piceOnTop=""
-			className={`${colorCode} w-[12.5%] text-5xl`}
+			className={`${colorCode} w-[12.5%] text-5xl hover:opacity-60`}
 			onClick={() => {
 				console.log('Klickat på mig ' + boardNumber + boardLetter)
 				let activePlayerLetter = ''
@@ -127,7 +127,7 @@ const Square = ({
 					{unicodePic}
 				</div>
 			</div>
-		</div>
+		</button>
 	)
 }
 

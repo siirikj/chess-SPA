@@ -30,6 +30,21 @@ class ChessGame {
 		this.state = 'in process'
 	}
 
+	checkIfVictory() {
+		const currentPlayerIsWhite = this.activeColor === 'white'
+
+		const oponentColor = currentPlayerIsWhite ? 'black' : 'white'
+		const didWin = !this.piecesLocation[oponentColor].king.alive
+
+		if (didWin) {
+			const winner = currentPlayerIsWhite ? this.whitePlayer : this.blackPlayer
+
+			this.addWinner(winner.username)
+		}
+
+		return didWin
+	}
+
 	addWinner(username) {
 		if (this.creator.username === username) {
 			this.winner = this.creator

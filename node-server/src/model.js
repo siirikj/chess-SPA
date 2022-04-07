@@ -95,6 +95,30 @@ class Model {
 
 	removeChessGame(chessGameId) {
 		const tempChessGames = this.chessGames.filter(
+			(chessGame) => chessGame?.id !== chessGameId
+		)
+
+		this.chessGames = tempChessGames
+
+		return tempChessGames
+	}
+
+	updatePiecesLocation(chessGameId, newPiecesLocation) {
+		const chessGame = this.getChessGameFromId(chessGameId)
+		chessGame.piecesLocation = newPiecesLocation
+
+		const moveMadeWin = chessGame.checkIfVictory()
+
+		if (!moveMadeWin) {
+			chessGame.activeColor =
+				chessGame.activeColor === 'white' ? 'black' : 'white'
+		}
+
+		return [moveMadeWin, chessGame]
+	}
+
+	removeChessGame(chessGameId) {
+		const tempChessGames = this.chessGames.filter(
 			(chessGame) => chessGame.id !== chessGameId
 		)
 		this.chessGames = tempChessGames
@@ -291,8 +315,27 @@ class Model {
 				socket.leave(`chessRoom#${chessGameId}`)
 			})
 
-			socket.on('updateActiveColor', (args) => {
-				const { newActiveColor, chessGameId } = args
+			socket.on('updatePiecesLocation', (args) => {
+				const { chessGameId, newPiecesLocation } = args
+
+				const [moveMadeWin, updatedChessGameInfo] = this.updatePiecesLocation(
+					chessGameId,
+					newPiecesLocation
+				)
+
+				io.to(`chessRoom#${chessGameId}`).emit('chessGameInfoUpdate', {
+					updatedChessGameInfo,
+				})
+
+				if (moveMadeWin) {
+					setTimeout(() => {
+						this.removeChessGame(chessGameId)
+
+						io.to(`chessRoom#${chessGameId}`).emit('chessGameInfoUpdate', {
+							updatedChessGameInfo: 'deleted',
+						})
+					}, 3000)
+				}
 			})
 
 			socket.on('surrender', (args) => {
