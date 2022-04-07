@@ -201,7 +201,26 @@ const legalMove = (
 			console.log('False queen move!')
 			return false
 		} else {
-			//TODO: 3 check if someone is on path betwen
+			if (currentNumber === newNumber || currentLetter === newLetter) {
+				const noPiecesBetweenHorizontal = checkForChessPieceBetweenHorizontal(
+					piecesLocation,
+					currentNumber,
+					currentLetter,
+					distanceLetters
+				)
+				const noPiecesBetweenVertical = checkForChessPieceBetweenVertical(
+					piecesLocation,
+					currentNumber,
+					currentLetter,
+					distanceNumbers
+				)
+				if (!noPiecesBetweenHorizontal || !noPiecesBetweenVertical) {
+					console.log('False queen move! There is someone blocking your path')
+					return false
+				}
+			}
+
+			//TODO: 3 check if someone is on path betwen you vertically
 		}
 	} else if (noNumberChessPiece === 'pawn') {
 		if (activePlayer === 'black') {
@@ -243,16 +262,19 @@ const legalMove = (
 			console.log('False rook move!')
 			return false
 		} else {
-			//TODO 1: Check is someone is in between you!
-			const noPiecesBetween = checkForChessPieceBetweenHorizontal(
+			const noPiecesBetweenHorizontal = checkForChessPieceBetweenHorizontal(
 				piecesLocation,
 				currentNumber,
 				currentLetter,
-				newLetter,
 				distanceLetters
 			)
-			// let noPiecesBetween = true
-			if (!noPiecesBetween) {
+			/* const noPiecesBetweenVertical = checkForChessPieceBetweenVertical(
+				piecesLocation,
+				currentNumber,
+				currentLetter,
+				distanceNumbers
+			) */
+			if (!noPiecesBetweenHorizontal /* || !noPiecesBetweenVertical */) {
 				console.log('False rook move! There is someone blocking your path')
 				return false
 			}
@@ -262,6 +284,17 @@ const legalMove = (
 			console.log('False bishop move!')
 			return false
 		} else {
+			const noPiecesBetweenDiagonal = checkForChessPieceBetweenDiagonal(
+				piecesLocation,
+				currentNumber,
+				currentLetter,
+				distanceNumbers,
+				distanceLetters
+			)
+			if (!noPiecesBetweenDiagonal) {
+				console.log('False bishop move! There is someone blocking your path')
+				return false
+			}
 			//TODO 2: Check is someone is in between you!
 		}
 	} else if (noNumberChessPiece === 'knight') {
@@ -279,49 +312,168 @@ const legalMove = (
 	return true
 }
 
+const checkForChessPieceBetweenDiagonal = (
+	piecesLocation,
+	currentNumber,
+	currentLetter,
+	distanceNumbers,
+	distanceLetters
+) => {
+	const blackPieces = Object.keys(piecesLocation.black)
+	const boardLetters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+	const currentLetterIndex = boardLetters.indexOf(currentLetter)
+	let returnValue = true
+	// 1 if up, -1 if down
+	let upOrDown = distanceNumbers > 0 ? 1 : -1
+	let absOrNot =
+		distanceNumbers > 0 ? distanceNumbers : Math.abs(distanceNumbers)
+	// -1 if left, 1 if right
+	let rightOrLeft = distanceLetters > 0 ? -1 : 1
+	blackPieces.forEach((chessPiece) => {
+		for (let i = 1; i <= absOrNot; i++) {
+			if (
+				piecesLocation.black[chessPiece].position.number ===
+					currentNumber + i * upOrDown &&
+				piecesLocation.black[chessPiece].position.letter ===
+					boardLetters[currentLetterIndex + i * rightOrLeft]
+			) {
+				returnValue = false
+			}
+		}
+		for (let i = 1; i <= absOrNot; i++) {
+			if (
+				piecesLocation.white[chessPiece].position.number ===
+					currentNumber + i * upOrDown &&
+				piecesLocation.white[chessPiece].position.letter ===
+					boardLetters[currentLetterIndex + i * rightOrLeft]
+			) {
+				returnValue = false
+			}
+		}
+	})
+	return returnValue
+}
+
 const checkForChessPieceBetweenHorizontal = (
 	piecesLocation,
 	currentNumber,
 	currentLetter,
-	newLetter,
 	distanceLetters
 ) => {
-	//const boardNumbers = [8, 7, 6, 5, 4, 3, 2, 1]
 	const blackPieces = Object.keys(piecesLocation.black)
-	const whitePieces = Object.keys(piecesLocation.white)
 	const boardLetters = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h']
+	const currentLetterIndex = boardLetters.indexOf(currentLetter)
+	let returnValue = true
 	if (distanceLetters > 0) {
-		console.log('HEJ HOPP DETTA ÄR #1')
-		piecesLocation.white.forEach((chessPiece) => {
-			for (
-				let i = boardLetters.indecOf(currentLetter);
-				i <= boardLetters.indecOf(newLetter);
-				i++
-			) {
+		console.log('HORIZONTAL #1 LEFT')
+		console.log('distanceLetters: ' + distanceLetters)
+		console.log('currentNumber: ' + currentNumber)
+		blackPieces.forEach((chessPiece) => {
+			for (let i = 1; i <= distanceLetters; i++) {
 				if (
-					chessPiece.position.number === currentNumber &&
-					chessPiece.position.letter === boardLetters[i]
+					piecesLocation.black[chessPiece].position.number === currentNumber &&
+					piecesLocation.black[chessPiece].position.letter ===
+						boardLetters[currentLetterIndex - i]
 				) {
-					return false
+					returnValue = false
+				}
+				for (let i = 1; i <= distanceLetters; i++) {
+					if (
+						piecesLocation.white[chessPiece].position.number ===
+							currentNumber &&
+						piecesLocation.white[chessPiece].position.letter ===
+							boardLetters[currentLetterIndex - i]
+					) {
+						returnValue = false
+					}
 				}
 			}
 		})
-		piecesLocation.black.forEach((chessPiece) => {
-			//Do the same
-		})
 	} else {
-		console.log('HEJ HOPP DETTA ÄR #2')
-		// distanceLetters < 0
+		console.log('HORIZONTAL #2')
+		blackPieces.forEach((chessPiece) => {
+			for (let i = 1; i <= Math.abs(distanceLetters); i++) {
+				if (
+					piecesLocation.black[chessPiece].position.number === currentNumber &&
+					piecesLocation.black[chessPiece].position.letter ===
+						boardLetters[currentLetterIndex + i]
+				) {
+					returnValue = false
+				}
+				for (let i = 1; i <= Math.abs(distanceLetters); i++) {
+					if (
+						piecesLocation.white[chessPiece].position.number ===
+							currentNumber &&
+						piecesLocation.white[chessPiece].position.letter ===
+							boardLetters[currentLetterIndex + i]
+					) {
+						returnValue = false
+					}
+				}
+			}
+		})
 	}
-	return true
+	return returnValue
 }
 const checkForChessPieceBetweenVertical = (
 	piecesLocation,
 	currentNumber,
 	currentLetter,
-	newLetter,
 	distanceNumbers
-) => {}
+) => {
+	const blackPieces = Object.keys(piecesLocation.black)
+	let returnValue = true
+	if (distanceNumbers > 0) {
+		console.log('VERTICAL #1')
+		blackPieces.forEach((chessPiece) => {
+			//check black
+			for (let i = 1; i <= distanceNumbers; i++) {
+				if (
+					piecesLocation.black[chessPiece].position.number ===
+						currentNumber + i &&
+					piecesLocation.black[chessPiece].position.letter === currentLetter
+				) {
+					returnValue = false
+				}
+			}
+			//check white
+			for (let i = 1; i <= distanceNumbers; i++) {
+				if (
+					piecesLocation.white[chessPiece].position.number ===
+						currentNumber + i &&
+					piecesLocation.white[chessPiece].position.letter === currentLetter
+				) {
+					returnValue = false
+				}
+			}
+		})
+	} else {
+		console.log('VERTICAL #2')
+		blackPieces.forEach((chessPiece) => {
+			//check black
+			for (let i = 1; i <= Math.abs(distanceNumbers); i++) {
+				if (
+					piecesLocation.black[chessPiece].position.number ===
+						currentNumber - i &&
+					piecesLocation.black[chessPiece].position.letter === currentLetter
+				) {
+					returnValue = false
+				}
+			}
+			//check white
+			for (let i = 1; i <= Math.abs(distanceNumbers); i++) {
+				if (
+					piecesLocation.white[chessPiece].position.number ===
+						currentNumber - i &&
+					piecesLocation.white[chessPiece].position.letter === currentLetter
+				) {
+					returnValue = false
+				}
+			}
+		})
+	}
+	return returnValue
+}
 //----------------------------------------------
 
 // Matchar positonen på en pjäs till schakrutan
