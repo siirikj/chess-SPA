@@ -69,8 +69,6 @@ const Lobby = ({ socket }) => {
 				(chessGame) => chessGame.state === 'in process'
 			)
 
-			console.log(loggedInUser.username)
-
 			const firstActiveGameForLoggedInUser = gamesThatHaveStarted.find(
 				(chessGame) => {
 					const isCreator = chessGame.creator.username === loggedInUser.username

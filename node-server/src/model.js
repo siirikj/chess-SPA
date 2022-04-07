@@ -84,6 +84,12 @@ class Model {
 		const usernameOfOtherPlayer = chessGame?.getUsernameOfOtherPlayer(username)
 		chessGame?.addWinner(usernameOfOtherPlayer)
 
+		const tempChessGames = this.chessGames.filter(
+			(chessGame) => chessGame?.id !== chessGameId
+		)
+
+		this.chessGames = tempChessGames
+
 		return chessGame
 	}
 
@@ -138,6 +144,8 @@ class Model {
 					`\n--> User "${username}" with sessionId "${socket.id}" logged in <--`
 				)
 				this.connectUserWithSession(socket.id, username)
+
+				socket.emit('userGotLoggedIn', { username, sessionId: socket.id })
 				console.log(this.userSessions)
 				console.log(`--------------------------------------------------`)
 			})

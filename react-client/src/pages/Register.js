@@ -2,7 +2,6 @@ import { Button, TextField } from '@mui/material'
 import { Formik, Form } from 'formik'
 
 import { useRecoilState } from 'recoil'
-import { useCookies } from 'react-cookie'
 import axios from 'axios'
 
 import * as Yup from 'yup'
@@ -22,10 +21,9 @@ const RegisterSchema = Yup.object().shape({
 		.required('Required'),
 })
 
-const Register = () => {
+const Register = ({ socket }) => {
 	const navigate = useNavigate()
 
-	const [cookies, setCookie, removeCookie] = useCookies(['logged-in-user'])
 	const [loggedInUser, setLoggedInUser] = useRecoilState(loggedInUserAtom)
 
 	const [errorMsg, setErrorMsg] = useState(null)
@@ -47,20 +45,7 @@ const Register = () => {
 					const success = res.data.success
 
 					if (success) {
-						setLoggedInUser({
-							username: values.username,
-						})
-
-						setCookie(
-							'logged-in-user',
-							{
-								username: values.username,
-							},
-							{
-								maxAge: 60 * 60 * 24 * 7, // Inloggningssessionen gäller i en vecka
-								path: '/',
-							}
-						)
+						socket.emit('loginUser', { username: values.username })
 
 						navigate('/lobby')
 					} else {

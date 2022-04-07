@@ -17,7 +17,6 @@ const Navigation = ({ socket }) => {
 	return (
 		<div className="min-h-screen flex flex-col">
 			<nav className="py-2 w-full border-b-2 border-slate-400 bg-white font-light flex items-center justify-center gap-x-4">
-				<StyledLink to="home">Home</StyledLink>
 				<StyledLink to="lobby">Lobby</StyledLink>
 				{!loggedInUser && (
 					<>

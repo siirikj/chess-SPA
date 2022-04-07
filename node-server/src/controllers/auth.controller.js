@@ -5,11 +5,38 @@ import db from '../models/db.model.js'
 
 const router = Router()
 
-const requireAuth = (req, res, next) => {
-	console.log('Inne i requireAuth')
+const requireAuth = async (req, res, next) => {
+	const { username, sessionId } = req.query
+	console.log(`[I requireAuth] ${username} | ${sessionId}`)
 
-	next()
+	const isVerifiedUser = model.verifyUser(sessionId, username)
+
+	if (isVerifiedUser) {
+		next()
+	} else {
+		res.send(403)
+	}
 }
+
+router.get('/me', async (req, res) => {
+	try {
+		const { username } = req.query
+		console.log(`Nu får ${username} sin data`)
+
+		const [success, info] = await db.getUserInfo(username)
+
+		res.json({
+			success,
+			info,
+		})
+	} catch (error) {
+		console.log(error)
+		res.json({
+			success: false,
+			info: error,
+		})
+	}
+})
 
 router.post('/register', async (req, res) => {
 	try {

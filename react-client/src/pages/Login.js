@@ -1,6 +1,5 @@
 import { Button, TextField } from '@mui/material'
 import { Formik, Form } from 'formik'
-import { useCookies } from 'react-cookie'
 
 import { useRecoilState } from 'recoil'
 
@@ -22,7 +21,7 @@ const LoginSchema = Yup.object().shape({
 
 const Login = ({ socket }) => {
 	const navigate = useNavigate()
-	const [cookies, setCookie, removeCookie] = useCookies(['logged-in-user'])
+
 	const [loggedInUser, setLoggedInUser] = useRecoilState(loggedInUserAtom)
 
 	const [errorMsg, setErrorMsg] = useState(null)
@@ -46,21 +45,6 @@ const Login = ({ socket }) => {
 					const loggedInSuccessfully = res.data.correctPassword
 
 					if (loggedInSuccessfully) {
-						setLoggedInUser({
-							username: values.username,
-						})
-
-						setCookie(
-							'logged-in-user',
-							{
-								username: values.username,
-							},
-							{
-								maxAge: 60 * 60 * 24 * 7, // Inloggningssessionen gäller i en vecka
-								path: '/',
-							}
-						)
-
 						socket.emit('loginUser', { username: values.username })
 
 						navigate('/lobby')

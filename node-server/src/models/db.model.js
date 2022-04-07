@@ -53,7 +53,7 @@ const DataBase = {
 			)
 		)[0]
 
-		return userInfo
+		return [true, userInfo]
 	},
 	async addWin(username) {
 		const user = (
@@ -69,7 +69,7 @@ const DataBase = {
 		const newGamesPlayed = GamesPlayed + 1
 
 		await db.run(
-			'UPDATE timeSlots SET GamesWon=(?), GamesPlayed=(?) WHERE UserID=(?)',
+			'UPDATE Users SET GamesWon=(?), GamesPlayed=(?) WHERE UserID=(?)',
 			[newGamesWon, newGamesPlayed, UserID]
 		)
 	},
@@ -87,7 +87,7 @@ const DataBase = {
 		const newGamesPlayed = GamesPlayed + 1
 
 		await db.run(
-			'UPDATE timeSlots SET GamesLost=(?), GamesPlayed=(?) WHERE UserID=(?)',
+			'UPDATE Users SET GamesLost=(?), GamesPlayed=(?) WHERE UserID=(?)',
 			[newGamesLost, newGamesPlayed, UserID]
 		)
 	},

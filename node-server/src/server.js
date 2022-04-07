@@ -43,8 +43,10 @@ io.use(
 )
 
 // Controllers
-app.use('/api', chessGames.router)
+// app.use('/api/me', auth.requireAuth, auth.router)
 app.use('/api', auth.router)
+
+app.use('/api', chessGames.router)
 
 model.init(io)
 
