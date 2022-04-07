@@ -15,7 +15,7 @@ const ChessGame = () => {
 	// TODO: Ta bort denna och ersätt med Temp-komponenten
 	// TODO: Änvänd ES-linting
 	// TODO: passiv sessioninvlaidering timeout
-	//
+	// TODO: Kolla så att alla endpoints med känslig data verkligen är säkra
 
 	return (
 		<div>
