@@ -45,6 +45,52 @@ const DataBase = {
 
 		return correctPassword
 	},
+	async getUserInfo(username) {
+		const userInfo = (
+			await db.all(
+				'SELECT GamesWon, GamesLost, GamesPlayed FROM Users WHERE Username=(?)',
+				[username]
+			)
+		)[0]
+
+		return userInfo
+	},
+	async addWin(username) {
+		const user = (
+			await db.all(
+				'SELECT UserID, GamesWon, GamesPlayed FROM Users WHERE Username=(?)',
+				[username]
+			)
+		)[0]
+
+		const { UserID, GamesWon, GamesPlayed } = user
+
+		const newGamesWon = GamesWon + 1
+		const newGamesPlayed = GamesPlayed + 1
+
+		await db.run(
+			'UPDATE timeSlots SET GamesWon=(?), GamesPlayed=(?) WHERE UserID=(?)',
+			[newGamesWon, newGamesPlayed, UserID]
+		)
+	},
+	async addLoss(username) {
+		const user = (
+			await db.all(
+				'SELECT UserID, GamesLost, GamesPlayed FROM Users WHERE Username=(?)',
+				[username]
+			)
+		)[0]
+
+		const { UserID, GamesLost, GamesPlayed } = user
+
+		const newGamesLost = GamesLost + 1
+		const newGamesPlayed = GamesPlayed + 1
+
+		await db.run(
+			'UPDATE timeSlots SET GamesLost=(?), GamesPlayed=(?) WHERE UserID=(?)',
+			[newGamesLost, newGamesPlayed, UserID]
+		)
+	},
 	async addGame(username) {
 		try {
 			const creator = (

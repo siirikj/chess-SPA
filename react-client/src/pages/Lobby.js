@@ -5,6 +5,7 @@ import { useRecoilValue } from 'recoil'
 import { useEffect, useState } from 'react'
 import axios from 'axios'
 import { API_BASE_URL } from '..'
+import { useNavigate } from 'react-router-dom'
 
 const MOCK_CHESS_GAMES = [
 	{
@@ -38,6 +39,7 @@ const MOCK_CHESS_GAMES = [
 ]
 
 const Lobby = ({ socket }) => {
+	const navigate = useNavigate()
 	const loggedInUser = useRecoilValue(loggedInUserAtom)
 
 	const [chessGames, setChessGames] = useState([])
@@ -61,6 +63,30 @@ const Lobby = ({ socket }) => {
 		return () => socket.emit('leftLobby')
 	}, [])
 
+	useEffect(() => {
+		if (loggedInUser) {
+			const gamesThatHaveStarted = chessGames.filter(
+				(chessGame) => chessGame.state === 'in process'
+			)
+
+			console.log(loggedInUser.username)
+
+			const firstActiveGameForLoggedInUser = gamesThatHaveStarted.find(
+				(chessGame) => {
+					const isCreator = chessGame.creator.username === loggedInUser.username
+					const isOpponent =
+						chessGame.opponent.username === loggedInUser.username
+
+					return isCreator || isOpponent
+				}
+			)
+
+			if (firstActiveGameForLoggedInUser) {
+				navigate(`/chessgame/${firstActiveGameForLoggedInUser.id}`)
+			}
+		}
+	}, [chessGames])
+
 	return (
 		<div className="w-full flex flex-col items-center">
 			<h2>Lobby</h2>
@@ -80,6 +106,8 @@ const Lobby = ({ socket }) => {
 
 					const opponentExist = opponentName ? true : false
 
+					const gameHasStarted = game.state === 'in process'
+
 					return (
 						<div
 							key={game.id}
@@ -98,14 +126,14 @@ const Lobby = ({ socket }) => {
 							<div className="flex">
 								{isCreator ? (
 									<>
-										{opponentExist && (
+										{opponentExist && !gameHasStarted && (
 											<Button
 												variant="contained"
 												color="success"
 												sx={{ width: '85px', ml: '-101px', mr: '16px' }}
 												onClick={() => {
 													socket.emit('startChessGame', {
-														usernameOfRemover: loggedInUser.username,
+														usernameOfCreator: loggedInUser.username,
 														chessGameId: game.id,
 													})
 												}}
@@ -114,19 +142,21 @@ const Lobby = ({ socket }) => {
 											</Button>
 										)}
 
-										<Button
-											variant="contained"
-											color="error"
-											sx={{ width: '85px' }}
-											onClick={() => {
-												socket.emit('removeChessGame', {
-													usernameOfRemover: loggedInUser.username,
-													chessGameId: game.id,
-												})
-											}}
-										>
-											Delete
-										</Button>
+										{!gameHasStarted && (
+											<Button
+												variant="contained"
+												color="error"
+												sx={{ width: '85px' }}
+												onClick={() => {
+													socket.emit('removeChessGame', {
+														usernameOfRemover: loggedInUser.username,
+														chessGameId: game.id,
+													})
+												}}
+											>
+												Delete
+											</Button>
+										)}
 									</>
 								) : opponentExist ? (
 									<div className="w-[85px]" />

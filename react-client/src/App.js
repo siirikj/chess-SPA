@@ -11,6 +11,7 @@ import { CircularProgress } from '@mui/material'
 
 import io from 'socket.io-client'
 import { useEffect } from 'react'
+import ChessGameTemp from './pages/ChessGameTemp'
 
 const socket = io.connect('http://localhost:8080')
 
@@ -29,7 +30,7 @@ const App = () => {
 		<BrowserRouter>
 			<Routes>
 				<Route element={<Navigation socket={socket} />}>
-					<Route path="/" element={<App />} />
+					<Route path="/" element={<Home />} />
 					<Route path="home" element={<Home />} />
 					<Route
 						path="lobby"
@@ -47,6 +48,11 @@ const App = () => {
 					<Route path="profile" element={<Profile />} />
 					<Route path="register" element={<Register />} />
 					<Route path="chessGame" element={<ChessGame />} />
+
+					<Route
+						path="chessGame/:chessGameId"
+						element={<ChessGameTemp socket={socket} />}
+					/>
 				</Route>
 			</Routes>
 		</BrowserRouter>

@@ -57,11 +57,34 @@ class Model {
 		this.chessGames.push(chessGame)
 	}
 
+	getChessGameFromId(chessGameId) {
+		return this.chessGames.find((chessGame) => chessGame.id === chessGameId)
+	}
+
 	joinChessGame(chessGameId, username) {
-		const chessGame = this.chessGames.find(
-			(chessGame) => chessGame.id === chessGameId
-		)
+		const chessGame = this.getChessGameFromId(chessGameId)
+
 		chessGame.addOpponent(username)
+	}
+
+	startChessGame(chessGameId, username) {
+		const chessGame = this.getChessGameFromId(chessGameId)
+
+		const isCreator = chessGame.creator.username === username
+
+		if (isCreator) {
+			chessGame.startGame()
+		}
+
+		return isCreator
+	}
+
+	surrenderChessGame(chessGameId, username) {
+		const chessGame = this.getChessGameFromId(chessGameId)
+		const usernameOfOtherPlayer = chessGame?.getUsernameOfOtherPlayer(username)
+		chessGame?.addWinner(usernameOfOtherPlayer)
+
+		return chessGame
 	}
 
 	removeChessGame(chessGameId) {
@@ -204,6 +227,81 @@ class Model {
 
 				console.log(this.chessGames)
 				console.log(`--------------------------------------------------`)
+			})
+
+			socket.on('startChessGame', (args) => {
+				const { usernameOfCreator, chessGameId } = args
+
+				const userIsVerified = this.verifyUser(socket.id, usernameOfCreator)
+
+				if (!userIsVerified) {
+					console.log(
+						`\n--> Couldn't verify user "${usernameOfCreator}" with session-id "${socket.id}" <--`
+					)
+					return
+				}
+
+				const userIsCreator = this.startChessGame(
+					chessGameId,
+					usernameOfCreator
+				)
+
+				if (!userIsCreator) {
+					if (!userIsVerified) {
+						console.log(
+							`\n--> Couldn't verify user "${usernameOfCreator}" as the creator of game "${chessGameId}" <--`
+						)
+						return
+					}
+				}
+
+				console.log(
+					`\n--> User "${usernameOfCreator}" started game "${chessGameId}" <--`
+				)
+
+				io.to('lobby').emit('chessGamesUpdate', {
+					updatedChessGames: this.chessGames,
+				})
+
+				console.log(this.chessGames)
+				console.log(`--------------------------------------------------`)
+			})
+
+			socket.on('enteredGame', (args) => {
+				const { chessGameId } = args
+				console.log(
+					`User with session-id "${socket.id}" entered game "${chessGameId}"`
+				)
+				socket.join(`chessRoom#${chessGameId}`)
+			})
+
+			socket.on('leftGame', (args) => {
+				const { chessGameId } = args
+				console.log(
+					`User with session-id "${socket.id}" left game "${chessGameId}"`
+				)
+				socket.leave(`chessRoom#${chessGameId}`)
+			})
+
+			socket.on('surrender', (args) => {
+				const { chessGameId } = args
+
+				console.log(
+					`User with session-id "${socket.id}" surrendered game "${chessGameId}"`
+				)
+
+				const user = this.getUserFromSessionId(socket.id)
+
+				const finalChessGameInfo = this.surrenderChessGame(
+					chessGameId,
+					user?.username
+				)
+
+				io.to(`chessRoom#${chessGameId}`).emit('chessGameInfoUpdate', {
+					updatedChessGameInfo: finalChessGameInfo,
+				})
+
+				// socket.leave(`chessRoom#${chessGameId}`)
 			})
 
 			session.save((err) => {
