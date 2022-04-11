@@ -6,7 +6,9 @@
 	"type": "module",
 	"scripts": {
 		"test": "echo \"Error: no test specified\" && exit 1",
-		"start": "nodemon src/server.js"
+		"start": "nodemon src/server.js",
+		"lint": "eslint 'src/**/*.js' ; prettier --check src/",
+		"lint:fix": "eslint --fix 'src/**/*.js' ; prettier --write src/"
 	},
 	"author": "",
 	"license": "ISC",
@@ -23,6 +25,10 @@
 		"uuid": "^8.3.2"
 	},
 	"devDependencies": {
-		"nodemon": "^2.0.15"
+		"eslint": "^8.13.0",
+		"eslint-config-airbnb-base": "^15.0.0",
+		"eslint-config-prettier": "^8.5.0",
+		"nodemon": "^2.0.15",
+		"prettier": "^2.6.2"
 	}
 }

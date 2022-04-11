@@ -1,8 +1,8 @@
-import { atom } from 'recoil'
+import { atom } from "recoil";
 
 const loggedInUserAtom = atom({
-	key: 'loggedInUserAtom',
-	default: null,
-})
+  key: "loggedInUserAtom",
+  default: null,
+});
 
-export default loggedInUserAtom
+export default loggedInUserAtom;
