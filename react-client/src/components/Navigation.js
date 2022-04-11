@@ -1,4 +1,5 @@
-import { Link, Outlet } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 
 import { useRecoilState } from "recoil";
 import loggedInUserAtom from "../recoil/loggedInUserAtom";
@@ -10,7 +11,20 @@ const StyledLink = ({ to, children }) => (
 );
 
 const Navigation = ({ socket }) => {
+  const navigate = useNavigate();
   const [loggedInUser, setLoggedInUser] = useRecoilState(loggedInUserAtom);
+
+  useEffect(() => {
+    if (loggedInUser === undefined) {
+      navigate("/login");
+    }
+
+    return () => {
+      if (socket) {
+        socket.disconnect();
+      }
+    };
+  }, [loggedInUser]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -31,6 +45,7 @@ const Navigation = ({ socket }) => {
               onClick={() => {
                 setLoggedInUser(null);
                 socket.emit("logoutUser", { username: loggedInUser.username });
+                socket.disconnect();
               }}
             >
               Logout

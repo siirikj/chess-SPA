@@ -13,6 +13,8 @@ const Lobby = ({ socket }) => {
 
   const [chessGames, setChessGames] = useState([]);
 
+  console.log(socket);
+
   useEffect(() => {
     if (socket) {
       socket.on("chessGamesUpdate", (chessGamesUpdate) => {
@@ -36,7 +38,7 @@ const Lobby = ({ socket }) => {
         socket.emit("leftLobby");
       }
     };
-  }, []);
+  }, [socket]);
 
   useEffect(() => {
     if (loggedInUser) {

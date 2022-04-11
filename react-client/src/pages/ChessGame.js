@@ -1,7 +1,7 @@
 import { Button, CircularProgress } from "@mui/material";
 import axios from "axios";
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import { useRecoilValue } from "recoil";
 import { API_BASE_URL } from "..";
 import ChessBoard from "../components/ChessBoard";
@@ -10,7 +10,6 @@ import { initSelectedSquare, piecesUnicodes } from "../utils/chess/chessPieces";
 
 const ChessGameTemp = ({ socket }) => {
   const params = useParams();
-  const navigate = useNavigate();
   const loggedInUser = useRecoilValue(loggedInUserAtom);
 
   const [gameInfo, setGameInfo] = useState(null);
@@ -19,7 +18,6 @@ const ChessGameTemp = ({ socket }) => {
   const [currentPlayerInfo, setCurrentPlayerInfo] = useState(null);
 
   // TODO: Änvänd ES-linting
-  // TODO: passiv sessioninvlaidering timeout
   // TODO: Kolla så att alla endpoints med känslig data verkligen är säkra
 
   useEffect(() => {
@@ -41,7 +39,7 @@ const ChessGameTemp = ({ socket }) => {
     socket.emit("enteredGame", { chessGameId: params.chessGameId });
 
     return () => socket.emit("leftGame", { chessGameId: params.chessGameId });
-  }, []);
+  }, [socket]);
 
   useEffect(() => {
     if (gameInfo) {
@@ -78,9 +76,9 @@ const ChessGameTemp = ({ socket }) => {
 
   if (!gameInfo) return <CircularProgress size={60} />;
 
-  if (gameInfo === "deleted") {
-    navigate("/lobby");
-  }
+  // if (gameInfo === 'deleted') {
+  // 	navigate('/lobby')
+  // }
 
   const setPiecesLocationHandler = (newPiecesLocation) => {
     const chessGameId = gameInfo.id;
@@ -128,11 +126,6 @@ const ChessGameTemp = ({ socket }) => {
           </Button>
         </div>
       )}
-
-      {/* <p className="font-bold mt-3">Player info</p>
-			<pre>{JSON.stringify(currentPlayerInfo, null, 2)}</pre>
-
-			<pre>{JSON.stringify({ ...gameInfo, piecesLocation: {} }, null, 2)}</pre> */}
     </div>
   );
 };

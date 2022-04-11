@@ -2,8 +2,8 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 
 import { CircularProgress } from "@mui/material";
 import io from "socket.io-client";
-import { useEffect } from "react";
-import { useSetRecoilState } from "recoil";
+import { useEffect, useState } from "react";
+import { useRecoilState } from "recoil";
 import Lobby from "./pages/Lobby";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
@@ -13,23 +13,40 @@ import ChessGame from "./pages/ChessGame";
 
 import loggedInUserAtom from "./recoil/loggedInUserAtom";
 
-const socket = io.connect("http://localhost:8989");
-
 const App = () => {
-  const setLoggedInUser = useSetRecoilState(loggedInUserAtom);
+  const [loggedInUser, setLoggedInUser] = useRecoilState(loggedInUserAtom);
+
+  const [socket, setSocket] = useState(null);
 
   useEffect(() => {
-    socket.on("userGotLoggedIn", (args) => {
-      const { username, sessionId } = args;
+    console.log("Saker händer");
+    console.log(socket);
+    if (!socket || socket.disconnected) {
+      console.log("Uppdaterar socket");
 
-      setLoggedInUser({
-        username,
-        sessionId,
+      const newSocket = io.connect("http://localhost:8989");
+
+      newSocket.on("userGotLoggedIn", (args) => {
+        const { username, sessionId } = args;
+
+        setLoggedInUser({
+          username,
+          sessionId,
+        });
       });
-    });
 
-    return () => socket.disconnect();
-  }, []);
+      newSocket.on("disconnect", () => {
+        setLoggedInUser(undefined);
+        newSocket.disconnect();
+      });
+
+      setSocket(newSocket);
+    }
+  }, [loggedInUser]);
+
+  useEffect(() => {
+    console.log(socket);
+  }, [socket]);
 
   const connected = socket?.connected || true;
 
@@ -49,7 +66,7 @@ const App = () => {
           <Route path="lobby" element={lobbyComponent} />
           <Route path="login" element={<Login socket={socket} />} />
           <Route path="profile" element={<Profile />} />
-          <Route path="register" element={<Register />} />
+          <Route path="register" element={<Register socket={socket} />} />
           <Route path="chessGame" element={<ChessGame />} />
 
           <Route

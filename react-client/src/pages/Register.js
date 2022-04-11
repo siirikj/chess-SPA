@@ -34,6 +34,8 @@ const Register = ({ socket }) => {
 
   if (loggedInUser) return null;
 
+  console.log(socket);
+
   return (
     <div className="w-full flex items-center flex-col">
       <h2>Register account</h2>

@@ -1,10 +1,12 @@
 import User from "./user.model.js";
 
+const VALID_TIME = 10 * 1000; // 24 * 60 * 60 * 1000
+
 class UserSession {
   constructor(sessionId) {
     this.sessionId = sessionId;
     this.user = null;
-    this.validUntil = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
+    this.validUntil = new Date(new Date().getTime() + VALID_TIME);
   }
 
   addUserToSession(username) {
@@ -16,7 +18,7 @@ class UserSession {
   }
 
   updateValidUntil() {
-    this.validUntil = new Date(new Date().getTime() + 24 * 60 * 60 * 1000);
+    this.validUntil = new Date(new Date().getTime() + VALID_TIME);
   }
 }
 

@@ -22,7 +22,7 @@ class Model {
       (currentUserSession) => currentUserSession.sessionId === sessionId
     );
 
-    userSession.removeUserFromSession(username);
+    if (userSession) userSession.removeUserFromSession(username);
   }
 
   addUserSession(sessionId) {
@@ -34,15 +34,22 @@ class Model {
     const session = this.userSessions.find(
       (currentUserSession) => currentUserSession.sessionId === sessionId
     );
-    const sessionValidUntil = session.validUntil;
+
+    const sessionValidUntil = session
+      ? session.validUntil
+      : new Date(new Date().getTime() - 50);
 
     if (new Date().getTime() > sessionValidUntil) {
-      session.removeUserFromSession();
-      this.removeUserSession(sessionId);
+      if (session) {
+        console.log(`Num before = ${this.userSessions.length}`);
+        this.removeUserSession(sessionId);
+        console.log(`Num after = ${this.userSessions.length}`);
+      }
       return false;
     }
 
-    session.timeupdateValidUntil();
+    session.updateValidUntil();
+
     return true;
     // TODO: run function whenever interacting with backend
   }
@@ -158,18 +165,30 @@ class Model {
       });
 
       socket.on("enteredLobby", () => {
-        console.log(
-          `\n--> User with sessionId ${socket.id} joined the lobby <--`
-        );
-        socket.join("lobby");
-        console.log(`--------------------------------------------------`);
+        const validSession = this.verifyIfSessionValid(socket.id);
+
+        if (validSession) {
+          console.log(
+            `\n--> User with sessionId ${socket.id} joined the lobby <--`
+          );
+          socket.join("lobby");
+          console.log(`--------------------------------------------------`);
+        } else {
+          socket.disconnect();
+        }
       });
 
       socket.on("leftLobby", () => {
-        console.log(
-          `\n--> User with sessionId ${socket.id} left the lobby <--`
-        );
-        socket.leave("lobby");
+        const validSession = this.verifyIfSessionValid(socket.id);
+
+        if (validSession) {
+          console.log(
+            `\n--> User with sessionId ${socket.id} left the lobby <--`
+          );
+          socket.leave("lobby");
+        } else {
+          socket.disconnect();
+        }
       });
 
       socket.on("loginUser", (user) => {
@@ -186,188 +205,240 @@ class Model {
       });
 
       socket.on("logoutUser", (user) => {
-        const { username } = user;
+        const validSession = this.verifyIfSessionValid(socket.id);
 
-        console.log(
-          `\n--> User "${username}" with sessionId "${socket.id}" logged out <--`
-        );
-        this.disconnectUserWithSession(socket.id, username);
-        console.log(this.userSessions);
-        console.log(`--------------------------------------------------`);
+        if (validSession) {
+          const { username } = user;
+
+          console.log(
+            `\n--> User "${username}" with sessionId "${socket.id}" logged out <--`
+          );
+          this.disconnectUserWithSession(socket.id, username);
+          console.log(this.userSessions);
+          console.log(`--------------------------------------------------`);
+        } else {
+          socket.disconnect();
+        }
       });
 
       socket.on("createChessGame", (user) => {
-        const { username } = user;
+        const validSession = this.verifyIfSessionValid(socket.id);
 
-        const userIsVerified = this.verifyUser(socket.id, username);
+        if (validSession) {
+          const { username } = user;
 
-        if (!userIsVerified) {
-          console.log(
-            `\n--> Couldn't verify user "${username}" with session-id "${socket.id}" <--`
-          );
-          return;
-        }
+          const userIsVerified = this.verifyUser(socket.id, username);
 
-        console.log(`\n--> User "${username}" created a game <--`);
-
-        this.addChessGame(username);
-
-        io.to("lobby").emit("chessGamesUpdate", {
-          updatedChessGames: this.chessGames,
-        });
-
-        console.log(this.chessGames);
-        console.log(`--------------------------------------------------`);
-      });
-
-      socket.on("removeChessGame", (args) => {
-        const { usernameOfRemover, chessGameId } = args;
-
-        const userIsVerified = this.verifyUser(socket.id, usernameOfRemover);
-
-        if (!userIsVerified) {
-          console.log(
-            `\n--> Couldn't verify user "${usernameOfRemover}" with session-id "${socket.id}" <--`
-          );
-          return;
-        }
-
-        this.removeChessGame(chessGameId);
-
-        console.log(
-          `\n--> User "${usernameOfRemover}" removed game "${chessGameId}" <--`
-        );
-
-        io.to("lobby").emit("chessGamesUpdate", {
-          updatedChessGames: this.chessGames,
-        });
-
-        console.log(this.chessGames);
-        console.log(`--------------------------------------------------`);
-      });
-
-      socket.on("joinChessGame", (args) => {
-        const { usernameOfOpponent, chessGameId } = args;
-
-        const userIsVerified = this.verifyUser(socket.id, usernameOfOpponent);
-
-        if (!userIsVerified) {
-          console.log(
-            `\n--> Couldn't verify user "${usernameOfOpponent}" with session-id "${socket.id}" <--`
-          );
-          return;
-        }
-
-        this.joinChessGame(chessGameId, usernameOfOpponent);
-
-        console.log(
-          `\n--> User "${usernameOfOpponent}" joined game "${chessGameId}" <--`
-        );
-
-        io.to("lobby").emit("chessGamesUpdate", {
-          updatedChessGames: this.chessGames,
-        });
-
-        console.log(this.chessGames);
-        console.log(`--------------------------------------------------`);
-      });
-
-      socket.on("startChessGame", (args) => {
-        const { usernameOfCreator, chessGameId } = args;
-
-        const userIsVerified = this.verifyUser(socket.id, usernameOfCreator);
-
-        if (!userIsVerified) {
-          console.log(
-            `\n--> Couldn't verify user "${usernameOfCreator}" with session-id "${socket.id}" <--`
-          );
-          return;
-        }
-
-        const userIsCreator = this.startChessGame(
-          chessGameId,
-          usernameOfCreator
-        );
-
-        if (!userIsCreator) {
           if (!userIsVerified) {
             console.log(
-              `\n--> Couldn't verify user "${usernameOfCreator}" as the creator of game "${chessGameId}" <--`
+              `\n--> Couldn't verify user "${username}" with session-id "${socket.id}" <--`
             );
             return;
           }
+
+          console.log(`\n--> User "${username}" created a game <--`);
+
+          this.addChessGame(username);
+
+          io.to("lobby").emit("chessGamesUpdate", {
+            updatedChessGames: this.chessGames,
+          });
+
+          console.log(this.chessGames);
+          console.log(`--------------------------------------------------`);
+        } else {
+          socket.disconnect();
         }
+      });
 
-        console.log(
-          `\n--> User "${usernameOfCreator}" started game "${chessGameId}" <--`
-        );
+      socket.on("removeChessGame", (args) => {
+        const validSession = this.verifyIfSessionValid(socket.id);
 
-        io.to("lobby").emit("chessGamesUpdate", {
-          updatedChessGames: this.chessGames,
-        });
+        if (validSession) {
+          const { usernameOfRemover, chessGameId } = args;
 
-        console.log(this.chessGames);
-        console.log(`--------------------------------------------------`);
+          const userIsVerified = this.verifyUser(socket.id, usernameOfRemover);
+
+          if (!userIsVerified) {
+            console.log(
+              `\n--> Couldn't verify user "${usernameOfRemover}" with session-id "${socket.id}" <--`
+            );
+            return;
+          }
+
+          this.removeChessGame(chessGameId);
+
+          console.log(
+            `\n--> User "${usernameOfRemover}" removed game "${chessGameId}" <--`
+          );
+
+          io.to("lobby").emit("chessGamesUpdate", {
+            updatedChessGames: this.chessGames,
+          });
+
+          console.log(this.chessGames);
+          console.log(`--------------------------------------------------`);
+        } else {
+          socket.disconnect();
+        }
+      });
+
+      socket.on("joinChessGame", (args) => {
+        const validSession = this.verifyIfSessionValid(socket.id);
+
+        if (validSession) {
+          const { usernameOfOpponent, chessGameId } = args;
+
+          const userIsVerified = this.verifyUser(socket.id, usernameOfOpponent);
+
+          if (!userIsVerified) {
+            console.log(
+              `\n--> Couldn't verify user "${usernameOfOpponent}" with session-id "${socket.id}" <--`
+            );
+            return;
+          }
+
+          this.joinChessGame(chessGameId, usernameOfOpponent);
+
+          console.log(
+            `\n--> User "${usernameOfOpponent}" joined game "${chessGameId}" <--`
+          );
+
+          io.to("lobby").emit("chessGamesUpdate", {
+            updatedChessGames: this.chessGames,
+          });
+
+          console.log(this.chessGames);
+          console.log(`--------------------------------------------------`);
+        } else {
+          socket.disconnect();
+        }
+      });
+
+      socket.on("startChessGame", (args) => {
+        const validSession = this.verifyIfSessionValid(socket.id);
+
+        if (validSession) {
+          const { usernameOfCreator, chessGameId } = args;
+
+          const userIsVerified = this.verifyUser(socket.id, usernameOfCreator);
+
+          if (!userIsVerified) {
+            console.log(
+              `\n--> Couldn't verify user "${usernameOfCreator}" with session-id "${socket.id}" <--`
+            );
+            return;
+          }
+
+          const userIsCreator = this.startChessGame(
+            chessGameId,
+            usernameOfCreator
+          );
+
+          if (!userIsCreator) {
+            if (!userIsVerified) {
+              console.log(
+                `\n--> Couldn't verify user "${usernameOfCreator}" as the creator of game "${chessGameId}" <--`
+              );
+              return;
+            }
+          }
+
+          console.log(
+            `\n--> User "${usernameOfCreator}" started game "${chessGameId}" <--`
+          );
+
+          io.to("lobby").emit("chessGamesUpdate", {
+            updatedChessGames: this.chessGames,
+          });
+
+          console.log(this.chessGames);
+          console.log(`--------------------------------------------------`);
+        } else {
+          socket.disconnect();
+        }
       });
 
       socket.on("enteredGame", (args) => {
-        const { chessGameId } = args;
-        console.log(
-          `User with session-id "${socket.id}" entered game "${chessGameId}"`
-        );
-        socket.join(`chessRoom#${chessGameId}`);
+        const validSession = this.verifyIfSessionValid(socket.id);
+
+        if (validSession) {
+          const { chessGameId } = args;
+          console.log(
+            `User with session-id "${socket.id}" entered game "${chessGameId}"`
+          );
+          socket.join(`chessRoom#${chessGameId}`);
+        } else {
+          socket.disconnect();
+        }
       });
 
       socket.on("leftGame", (args) => {
-        const { chessGameId } = args;
-        console.log(
-          `User with session-id "${socket.id}" left game "${chessGameId}"`
-        );
-        socket.leave(`chessRoom#${chessGameId}`);
+        const validSession = this.verifyIfSessionValid(socket.id);
+
+        if (validSession) {
+          const { chessGameId } = args;
+          console.log(
+            `User with session-id "${socket.id}" left game "${chessGameId}"`
+          );
+          socket.leave(`chessRoom#${chessGameId}`);
+        } else {
+          socket.disconnect();
+        }
       });
 
       socket.on("updatePiecesLocation", (args) => {
-        const { chessGameId, newPiecesLocation } = args;
+        const validSession = this.verifyIfSessionValid(socket.id);
 
-        const [moveMadeWin, updatedChessGameInfo] = this.updatePiecesLocation(
-          chessGameId,
-          newPiecesLocation
-        );
+        if (validSession) {
+          const { chessGameId, newPiecesLocation } = args;
 
-        io.to(`chessRoom#${chessGameId}`).emit("chessGameInfoUpdate", {
-          updatedChessGameInfo,
-        });
+          const [moveMadeWin, updatedChessGameInfo] = this.updatePiecesLocation(
+            chessGameId,
+            newPiecesLocation
+          );
 
-        if (moveMadeWin) {
-          setTimeout(() => {
-            this.removeChessGame(chessGameId);
+          io.to(`chessRoom#${chessGameId}`).emit("chessGameInfoUpdate", {
+            updatedChessGameInfo,
+          });
 
-            io.to(`chessRoom#${chessGameId}`).emit("chessGameInfoUpdate", {
-              updatedChessGameInfo: "deleted",
-            });
-          }, 3000);
+          if (moveMadeWin) {
+            setTimeout(() => {
+              this.removeChessGame(chessGameId);
+
+              io.to(`chessRoom#${chessGameId}`).emit("chessGameInfoUpdate", {
+                updatedChessGameInfo: "deleted",
+              });
+            }, 3000);
+          }
+        } else {
+          socket.disconnect();
         }
       });
 
       socket.on("surrender", (args) => {
-        const { chessGameId } = args;
+        const validSession = this.verifyIfSessionValid(socket.id);
 
-        console.log(
-          `User with session-id "${socket.id}" surrendered game "${chessGameId}"`
-        );
+        if (validSession) {
+          const { chessGameId } = args;
 
-        const user = this.getUserFromSessionId(socket.id);
+          console.log(
+            `User with session-id "${socket.id}" surrendered game "${chessGameId}"`
+          );
 
-        const finalChessGameInfo = this.surrenderChessGame(
-          chessGameId,
-          user?.username
-        );
+          const user = this.getUserFromSessionId(socket.id);
 
-        io.to(`chessRoom#${chessGameId}`).emit("chessGameInfoUpdate", {
-          updatedChessGameInfo: finalChessGameInfo,
-        });
+          const finalChessGameInfo = this.surrenderChessGame(
+            chessGameId,
+            user?.username
+          );
 
-        // socket.leave(`chessRoom#${chessGameId}`)
+          io.to(`chessRoom#${chessGameId}`).emit("chessGameInfoUpdate", {
+            updatedChessGameInfo: finalChessGameInfo,
+          });
+        } else {
+          socket.disconnect();
+        }
       });
 
       session.save((err) => {
